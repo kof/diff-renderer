@@ -1,0 +1,35 @@
+<script src="../build/diffRenderer.js"></script>
+
+<div id="result"></div>
+
+<script id="tpl1" type="text"
+    ><div id="content">
+        <div class="item"></div>
+        <div class="item"></div>
+        <div class="item"></div>
+    </div
+></script>
+
+<script id="tpl2" type="text"
+    ><div id="content" class="content">
+        <div class="item"></div>
+        <div class="item"></div>
+        <div class="item"></div>
+    </div
+></script>
+<script>
+(function() {
+    function $(s) {
+        return document.querySelectorAll(s)
+    }
+
+    var result = $('#result')[0],
+        tpl1 = $('#tpl1')[0],
+        tpl2 = $('#tpl2')[0],
+        renderer = new DiffRenderer(result)
+
+    renderer.render(result, tpl1.innerHTML)
+    //renderer.render(result, tpl2.innerHTML)
+
+}())
+</script>
