@@ -1,6 +1,6 @@
 <script src="../build/diffRenderer.js"></script>
 
-<div id="result"></div>
+<div id="content"></div>
 
 <script id="tpl1" type="text"
     ><div id="content">
@@ -23,13 +23,13 @@
         return document.querySelectorAll(s)
     }
 
-    var result = $('#result')[0],
+    var result = $('#content')[0],
         tpl1 = $('#tpl1')[0],
         tpl2 = $('#tpl2')[0],
         renderer = new DiffRenderer(result)
 
-    renderer.render(result, tpl1.innerHTML)
-    //renderer.render(result, tpl2.innerHTML)
+    renderer.render(tpl1.innerHTML)
+    //renderer.render(tpl2.innerHTML)
 
 }())
 </script>
