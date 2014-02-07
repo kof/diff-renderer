@@ -106,7 +106,7 @@ module.exports = function toJson(el) {
 
 module.exports = function toJson(str, parent) {
     var i = 0,
-        closed = false,
+        end = false,
         added = false,
         current,
         isWhite, isSlash, isOpen, isClose,
@@ -129,7 +129,7 @@ module.exports = function toJson(str, parent) {
         return parent
     }
 
-    while (!closed) {
+    while (!end) {
         current = str[i]
         isWhite = current == ' ' || current == '\t' || current == '\r' || current == '\n'
         isSlash = current == '/'
@@ -140,7 +140,7 @@ module.exports = function toJson(str, parent) {
         if (isClose) inCloser = false
 
         if (current == null) {
-            closed = true
+            end = true
         } else {
             if (inTag) {
                 if (inCloser) {
@@ -203,7 +203,7 @@ module.exports = function toJson(str, parent) {
             } else if (isOpen) {
                 inTag = true
             } else if (isSlash && !inAttrValue) {
-                closed = true
+                end = true
             } else {
                 inText = true
                 tag.name || (tag.name = '#text')
