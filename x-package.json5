@@ -1,0 +1,28 @@
+{
+    name: 'diff-renderer',
+    version: '0.1.0',
+    description: '',
+    keywords: [],
+    author: {
+        name: 'Oleg Slobodskoi',
+        email: 'oleg008@gmail.com'
+    },
+    repository: {
+        type: 'git',
+        url: 'git@github.com:kof/diff-renderer.git'
+    },
+    licenses: [
+        {
+           type: 'MIT',
+           url: 'http://www.opensource.org/licenses/mit-license.php'
+        }
+    ],
+    packages: ['package.json', 'component.json', 'bower.json', 'diff-renderer.jquery.json'],
+    'package.json': {
+        devDependencies: {
+            bench: '0.3.5',
+            browserify: '3.24.13',
+            'html-minifier': '0.5.5'
+        }
+    }
+}
