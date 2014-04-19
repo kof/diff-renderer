@@ -1,35 +1,98 @@
-<script src="../build/diffRenderer.js"></script>
+<script src="../dist/diffRenderer.js"></script>
+<style>
+    .test {
+        border: 1px solid red;
+        width: 100px;
+        height: 100px;
+    }
 
-<div id="content"></div>
+    .content {
+        border: 1px solid blue;
+        width: 100%;
+        height: 100%;
+    }
 
-<script id="tpl1" type="text"
-    ><div id="content">
-        <div class="item"></div>
-        <div class="item"></div>
-        <div class="item"></div>
-    </div
-></script>
+    .item {
+        background: green;
+        width: 100%;
+        height: 20px;
+        border-bottom: 1px solid red;
+    }
+    .item2 {
+        background: orange;
+    }
+</style>
+<section>
+    Render into empty div.
+    <div id="test1" class="test"></div>
+    <button onclick="test1()">Test1</button>
+</section>
 
-<script id="tpl2" type="text"
-    ><div id="content" class="content">
+<section>
+    Append elements.
+    <div id="test2" class="test"></div>
+    <button onclick="test2()">Test2</button>
+</section>
+
+<section>
+    Prepend elements.
+    <div id="test3" class="test"></div>
+    <button onclick="test3()">Test3</button>
+</section>
+
+<script id="tpl1" type="text">
+    <div class="content">
         <div class="item"></div>
         <div class="item"></div>
         <div class="item"></div>
-    </div
-></script>
+    </div>
+</script>
+
+<script id="tpl2" type="text">
+    <div id="content" class="content">
+        <div class="item"></div>
+        <div class="item"></div>
+        <div class="item"></div>
+        <div class="item item2"></div>
+        <div class="item item2"></div>
+    </div>
+</script>
+
+<script id="tpl3" type="text">
+    <div id="content" class="content">
+        <div class="item item2"></div>
+        <div class="item item2"></div>
+        <div class="item"></div>
+        <div class="item"></div>
+        <div class="item"></div>
+    </div>
+</script>
+
 <script>
 (function() {
     function $(s) {
         return document.querySelectorAll(s)
     }
 
-    var result = $('#content')[0],
-        tpl1 = $('#tpl1')[0],
-        tpl2 = $('#tpl2')[0],
-        renderer = new DiffRenderer(result)
+    var tpl1 = $('#tpl1')[0],
+        tpl2 = $('#tpl2')[0]
 
-    renderer.render(tpl1.innerHTML)
-    //renderer.render(tpl2.innerHTML)
+    window.test1 = function() {
+        new DiffRenderer($('#test1')[0]).render(tpl1.innerHTML.trim())
+    }
 
+    window.test2 = function() {
+        var renderer = new DiffRenderer($('#test2')[0])
+
+        renderer.render(tpl1.innerHTML.trim())
+        renderer.render(tpl2.innerHTML.trim())
+    }
+
+    window.test3 = function() {
+        var renderer = new DiffRenderer($('#test3')[0])
+
+        renderer.render(tpl1.innerHTML.trim())
+        renderer.render(tpl3.innerHTML.trim())
+    }
 }())
 </script>

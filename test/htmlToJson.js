@@ -43,7 +43,10 @@ a.deepEqual(toJson('<a attr1="first"attr2="second"/>').children[0], {name: 'a', 
 
 // Children
 a.deepEqual(toJson('<a>a</a>').children[0], {name: 'a', children: [{name: '#text', text: 'a'}]})
-a.deepEqual(toJson('<a> a\n</a>').children[0], {name: 'a', children: [{name: '#text', text: ' a\n'}]})
+a.deepEqual(toJson('<a>\n</a>').children[0], {name: 'a', children: [{name: '#text', text: '\n'}]})
+a.deepEqual(toJson('<a> a \n b </a>').children[0], {name: 'a', children: [{name: '#text', text: ' a \n b '}]})
+a.deepEqual(toJson('<a>\n<b></b></a>').children[0], {name: 'a', children: [{name: '#text', text: '\n'}, {name: 'b'}]})
+a.deepEqual(toJson('<a>\n<b/>\n\n<c/></a>').children[0], {name: 'a', children: [{name: '#text', text: '\n'}, {name: 'b'}, {name: '#text', text: '\n\n'}, {name: 'c'}]})
 a.deepEqual(toJson('<a><a/></a>').children[0], {name: 'a', children: [{name: 'a'}]})
 a.deepEqual(toJson('<a><b></b></a>').children[0], {name: 'a', children: [{name: 'b'}]})
 a.deepEqual(toJson('<a><b class="c"></b></a>').children[0], {name: 'a', children: [{name: 'b', attributes: {class: 'c'}}]})
