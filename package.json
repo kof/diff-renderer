@@ -22,5 +22,8 @@
     "browserify": "3.24.13",
     "html-minifier": "0.5.5",
     "htmltree": "0.0.4"
+  },
+  "dependencies": {
+    "docdiff": "0.0.1"
   }
 }
