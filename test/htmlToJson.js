@@ -40,6 +40,7 @@ a.deepEqual(toJson('<a id\n=\n"a\'"/>').children[0], {name: 'a', attributes: {id
 a.deepEqual(toJson('<a id\n=\n"a=\'b\'"\n/>').children[0], {name: 'a', attributes: {id: "a='b'"}})
 a.deepEqual(toJson('<a id="a" class="\nb "/>').children[0], {name: 'a', attributes: {id: 'a', class: '\nb '}})
 a.deepEqual(toJson('<a attr1="first"attr2="second"/>').children[0], {name: 'a', attributes: {attr1: 'first', attr2: 'second'}})
+a.deepEqual(toJson('<a attr="<p>"/>').children[0], {name: 'a', attributes: {attr: '<p>'}}, 'html within attribute')
 
 // Children
 a.deepEqual(toJson('<a>a</a>').children[0], {name: 'a', children: [{name: '#text', text: 'a'}]})
