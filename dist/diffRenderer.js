@@ -108,7 +108,7 @@ module.exports = function toJson(el) {
     }
 
     if (childNodes && childNodes.length) {
-        node.children = []
+        node.children = {length: childNodes.length}
         childNodesLength = childNodes.length
         for (i = 0; i < childNodesLength; i++) {
             node.children[i] = toJson(childNodes[i])
@@ -233,8 +233,9 @@ module.exports = function toJson(str, parent) {
             }
 
             if (tag.name && !added) {
-                parent.children || (parent.children = [])
-                parent.children.push(tag)
+                parent.children || (parent.children = {length: 0})
+                parent.children[parent.children.length] = tag
+                parent.children.length++
                 added = true
             }
         }
