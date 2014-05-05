@@ -4,6 +4,7 @@ module.exports = _dereq_('./lib')
 },{"./lib":5}],2:[function(_dereq_,module,exports){
 var domToJson = _dereq_('./domToJson'),
     htmlToJson = _dereq_('./htmlToJson'),
+    keypath = _dereq_('./keypath'),
     docDiff = _dereq_('docdiff')
 
 var createTextNode = document.createTextNode.bind(document),
@@ -18,11 +19,22 @@ var createTextNode = document.createTextNode.bind(document),
 function Renderer(el) {
     if (!(this instanceof Renderer)) return new Renderer(el)
     this.el = el
-    this.state = null
+    this.tree = null
     this.serialize()
 }
 
 module.exports = Renderer
+
+/**
+ * Properties we don't need to apply to the dom from the diff.
+ *
+ * @type {Object}
+ * @api public
+ */
+Renderer.IGNORE_PROPERTIES = {
+    parent: true,
+    dom: true
+}
 
 /**
  * Read DOM state.
@@ -31,7 +43,7 @@ module.exports = Renderer
  * @api public
  */
 Renderer.prototype.serialize = function() {
-    return this.state = domToJson(this.el).children
+    return this.tree = domToJson(this.el).children
 }
 
 /**
@@ -42,32 +54,51 @@ Renderer.prototype.serialize = function() {
  * @api public
  */
 Renderer.prototype.render = function(html) {
-    var newState, todo
+    var newTree, changes
 
     // this.el is empty, nothing to diff.
-    if (!this.state) {
+    if (!this.tree) {
         this.el.innerHTML = html
         this.serialize()
         return this
     }
 
-    newState = htmlToJson(html).children
-    todo = docDiff(this.state, newState)
+    newTree = htmlToJson(html).children
+    changes = docDiff(this.tree, newTree)
 
-    console.log('current', this.state)
-    console.log('new', newState)
-    console.log('todo', todo)
+    console.log('current', this.tree)
+    console.log('new', newTree)
 
-    todo.forEach(function(todo) {
-        this._apply(todo, this.el)
-    }, this)
+    changes.forEach(this._apply, this)
+
+    this.tree = newTree
 
     return this
 }
 
-Renderer.prototype._apply = function(todo, parent) {
+Renderer.prototype._apply = function(change) {
+    var prop = change.path[change.path.length - 1],
+        itemPath, item
+
+    if (Renderer.IGNORE_PROPERTIES[prop]) return
+
+    // Change attributes.
+    if (change.change == 'update' || change.change == 'add') {
+        itemPath = change.path.slice(0, change.path.length - 2)
+        item = keypath(this.tree, itemPath)
+        item.dom.setAttribute(prop, change.values.now)
+    } else if (change.change == 'remove') {
+        itemPath = change.path.slice(0, change.path.length - 1)
+        item = keypath(this.tree, itemPath)
+        for (prop in change.values.original) {
+            item.dom.removeAttribute(prop)
+        }
+    }
+        console.log(change, item)
+
+/*
     if (todo.change == 'add') {
-        todo.values.now.forEach(function(data) {
+        if (todo.path[1] == 'children')
             var el, attr
 
             if (data.name == '#text') {
@@ -79,17 +110,18 @@ Renderer.prototype._apply = function(todo, parent) {
                 }
             }
             parent.appendChild(el)
-        }, this)
+        }
     }
+*/
 }
 
 Renderer.prototype._createElement = function() {
 
 }
 
-},{"./domToJson":3,"./htmlToJson":4,"docdiff":7}],3:[function(_dereq_,module,exports){
+},{"./domToJson":3,"./htmlToJson":4,"./keypath":6,"docdiff":8}],3:[function(_dereq_,module,exports){
 module.exports = function toJson(el) {
-    var node = {name: el.nodeName.toLowerCase()},
+    var node = {name: el.nodeName.toLowerCase(), dom: el},
         attr = el.attributes, attrLength,
         childNodes = el.childNodes, childNodesLength,
         i
@@ -256,7 +288,42 @@ exports.domToJson = _dereq_('./domToJson')
 exports.htmlToJson = _dereq_('./htmlToJson')
 exports.docDiff = _dereq_('docdiff')
 
-},{"./Renderer":2,"./domToJson":3,"./htmlToJson":4,"docdiff":7}],6:[function(_dereq_,module,exports){
+},{"./Renderer":2,"./domToJson":3,"./htmlToJson":4,"docdiff":8}],6:[function(_dereq_,module,exports){
+
+/**
+ * Find value in json obj using dots path notation.
+ *
+ * http://docs.mongodb.org/manual/core/document/#document-dot-notation
+ *
+ * {a: {b: {c: 3}}}
+ * 'a.b.c' // 3
+ *
+ * {a: {b: {c: [1,2,3]}}}
+ * 'a.b.c.1' // 2
+ *
+ * @param {Object|Array} obj
+ * @param {String|Array} path
+ * @return {Mixed}
+ */
+module.exports = function(obj, path) {
+    var parts, i
+
+    if (!obj || !path) return obj
+
+    parts = typeof path == 'string' ? path.split('.') : path
+
+    for (i = 0; i < parts.length; i++) {
+        if (obj[parts[i]]) {
+            obj = obj[parts[i]]
+        } else if (parts[i + 1]) {
+            return
+        }
+    }
+
+    return obj
+}
+
+},{}],7:[function(_dereq_,module,exports){
 
 var utils = _dereq_('./utils');
 
@@ -326,7 +393,7 @@ module.exports = function (original, now) {
 
   return diff;
 };
-},{"./utils":8}],7:[function(_dereq_,module,exports){
+},{"./utils":9}],8:[function(_dereq_,module,exports){
 
 var arraydiff = _dereq_('./arraydiff');
 var utils = _dereq_('./utils');
@@ -415,7 +482,7 @@ function Change (path, key, change, type, now, original, added, removed) {
   }
 }
 
-},{"./arraydiff":6,"./utils":8}],8:[function(_dereq_,module,exports){
+},{"./arraydiff":7,"./utils":9}],9:[function(_dereq_,module,exports){
 
 /**
  * isObject

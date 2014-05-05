@@ -29,15 +29,22 @@
 </section>
 
 <section>
-    Append elements.
+    Change/add Attributes
     <div id="test2" class="test"></div>
     <button onclick="test2()">Test2</button>
 </section>
 
+
 <section>
-    Prepend elements.
+    Append elements.
     <div id="test3" class="test"></div>
     <button onclick="test3()">Test3</button>
+</section>
+
+<section>
+    Prepend elements.
+    <div id="test4" class="test"></div>
+    <button onclick="test4()">Test4</button>
 </section>
 
 <script id="tpl1" type="text">
@@ -48,7 +55,17 @@
     </div>
 </script>
 
+
 <script id="tpl2" type="text">
+    <div class="content content1">
+        <div class="item"></div>
+        <div class="item" id="item-id"></div>
+        <div></div>
+    </div>
+</script>
+
+
+<script id="tpl3" type="text">
     <div id="content" class="content">
         <div class="item"></div>
         <div class="item"></div>
@@ -58,7 +75,7 @@
     </div>
 </script>
 
-<script id="tpl3" type="text">
+<script id="tpl4" type="text">
     <div id="content" class="content">
         <div class="item item2"></div>
         <div class="item item2"></div>
