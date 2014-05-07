@@ -78,45 +78,68 @@ Renderer.prototype.render = function(html) {
 
 Renderer.prototype._apply = function(change) {
     var prop = change.path[change.path.length - 1],
-        itemPath, item
+        itemPath, item,
+        key,
+        now = change.values.now
 
     if (Renderer.IGNORE_PROPERTIES[prop]) return
 
-    // Change attributes.
-    if (change.change == 'update' || change.change == 'add') {
-        itemPath = change.path.slice(0, change.path.length - 2)
-        item = keypath(this.tree, itemPath)
-        item.dom.setAttribute(prop, change.values.now)
-    } else if (change.change == 'remove') {
+    // Change text node
+    if (prop == 'text') {
         itemPath = change.path.slice(0, change.path.length - 1)
         item = keypath(this.tree, itemPath)
-        for (prop in change.values.original) {
-            item.dom.removeAttribute(prop)
-        }
-    }
-        console.log(change, item)
-
-/*
-    if (todo.change == 'add') {
-        if (todo.path[1] == 'children')
-            var el, attr
-
-            if (data.name == '#text') {
-                el = createTextNode(data.text)
-            } else {
-                el = createElement(data.name)
-                for (attr in data.attributes) {
-                    el.setAttribute(attr, data.attributes[attr])
+        item.dom.textContent = change.values.now
+    // Create node
+    } else if (prop == 'children') {
+        if (change.change == 'add') {
+            itemPath = change.path.slice(0, change.path.length - 1)
+            item = keypath(this.tree, itemPath)
+            for (key in now) {
+                if (key != 'length') {
+                    item.dom.appendChild(
+                        this._createElement(
+                            now[key].name,
+                            now[key].text,
+                            now[key].attributes
+                        )
+                    )
                 }
             }
-            parent.appendChild(el)
+        }
+    // Change attributes
+    } else {
+        if (change.change == 'update' || change.change == 'add') {
+            itemPath = change.path.slice(0, change.path.length - 2)
+            item = keypath(this.tree, itemPath)
+            item.dom.setAttribute(prop, change.values.now)
+        } else if (change.change == 'remove') {
+            itemPath = change.path.slice(0, change.path.length - 1)
+            item = keypath(this.tree, itemPath)
+            for (prop in change.values.original) {
+                item.dom.removeAttribute(prop)
+            }
         }
     }
-*/
+
+
 }
 
-Renderer.prototype._createElement = function() {
+/**
+ * Create dom element.
+ *
+ * @param {String} name - #text, div etc.
+ * @param {String} [text] text for text node
+ * @param {Object} [attrs] node attributes
+ * @return {Element}
+ */
+Renderer.prototype._createElement = function(name, text, attrs) {
+    var el, attr
 
+    el = name == '#text' ? createTextNode(text) : createElement(name)
+
+    for (attr in attrs) el.setAttribute(attr, attrs[attr])
+
+    return el
 }
 
 },{"./domToJson":3,"./htmlToJson":4,"./keypath":6,"docdiff":8}],3:[function(_dereq_,module,exports){
