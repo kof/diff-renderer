@@ -1,5 +1,5 @@
 build:
-	node_modules/browserify/bin/cmd.js -e ./index.js -o dist/diffRenderer.js -s DiffRenderer
+	node_modules/browserify/bin/cmd.js -e ./index.js -o dist/diff-renderer.js -s DiffRenderer
 	xpkg .
 
 bench:
