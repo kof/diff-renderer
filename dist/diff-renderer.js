@@ -1,146 +1,7 @@
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.DiffRenderer=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
-module.exports = _dereq_('./lib')
+module.exports = _dereq_('./lib/renderer')
 
-},{"./lib":5}],2:[function(_dereq_,module,exports){
-var domToJson = _dereq_('./domToJson'),
-    htmlToJson = _dereq_('./htmlToJson'),
-    keypath = _dereq_('./keypath'),
-    docDiff = _dereq_('docdiff')
-
-var createTextNode = document.createTextNode.bind(document),
-    createElement = document.createElement.bind(document)
-
-/**
- * Renderer constructor.
- *
- * @param {Element} el dom node for serializing and updating.
- * @api public
- */
-function Renderer(el) {
-    if (!(this instanceof Renderer)) return new Renderer(el)
-    this.el = el
-    this.tree = null
-    this.serialize()
-}
-
-module.exports = Renderer
-
-/**
- * Properties we don't need to apply to the dom from the diff.
- *
- * @type {Object}
- * @api public
- */
-Renderer.IGNORE_PROPERTIES = {
-    parent: true,
-    dom: true
-}
-
-/**
- * Read DOM state.
- *
- * @return {Object} state
- * @api public
- */
-Renderer.prototype.serialize = function() {
-    return this.tree = domToJson(this.el).children
-}
-
-/**
- * Render changes to DOM.
- *
- * @param {String} html
- * @return {Renderer} this
- * @api public
- */
-Renderer.prototype.render = function(html) {
-    var newTree, changes
-
-    // this.el is empty, nothing to diff.
-    if (!this.tree) {
-        this.el.innerHTML = html
-        this.serialize()
-        return this
-    }
-
-    newTree = htmlToJson(html).children
-    changes = docDiff(this.tree, newTree)
-
-    console.log('current', this.tree)
-    console.log('new', newTree)
-
-    changes.forEach(this._apply, this)
-
-    this.tree = newTree
-
-    return this
-}
-
-Renderer.prototype._apply = function(change) {
-    var prop = change.path[change.path.length - 1],
-        itemPath, item,
-        key,
-        now = change.values.now
-
-    if (Renderer.IGNORE_PROPERTIES[prop]) return
-
-    // Change text node
-    if (prop == 'text') {
-        itemPath = change.path.slice(0, change.path.length - 1)
-        item = keypath(this.tree, itemPath)
-        item.dom.textContent = change.values.now
-    // Create node
-    } else if (prop == 'children') {
-        if (change.change == 'add') {
-            itemPath = change.path.slice(0, change.path.length - 1)
-            item = keypath(this.tree, itemPath)
-            for (key in now) {
-                if (key != 'length') {
-                    item.dom.appendChild(
-                        this._createElement(
-                            now[key].name,
-                            now[key].text,
-                            now[key].attributes
-                        )
-                    )
-                }
-            }
-        }
-    // Change attributes
-    } else {
-        if (change.change == 'update' || change.change == 'add') {
-            itemPath = change.path.slice(0, change.path.length - 2)
-            item = keypath(this.tree, itemPath)
-            item.dom.setAttribute(prop, change.values.now)
-        } else if (change.change == 'remove') {
-            itemPath = change.path.slice(0, change.path.length - 1)
-            item = keypath(this.tree, itemPath)
-            for (prop in change.values.original) {
-                item.dom.removeAttribute(prop)
-            }
-        }
-    }
-}
-
-/**
- * Create dom element.
- *
- * @param {String} name - #text, div etc.
- * @param {String} [text] text for text node
- * @param {Object} [attrs] node attributes
- * @return {Element}
- */
-Renderer.prototype._createElement = function(name, text, attrs) {
-    var el, attr
-
-    el = name == '#text' ? createTextNode(text) : createElement(name)
-
-    for (attr in attrs) el.setAttribute(attr, attrs[attr])
-
-    return el
-}
-
-},{"./domToJson":3,"./htmlToJson":4,"./keypath":6,"docdiff":8}],3:[function(_dereq_,module,exports){
+},{"./lib/renderer":5}],2:[function(_dereq_,module,exports){
 module.exports = function toJson(el) {
     var node = {name: el.nodeName.toLowerCase(), dom: el},
         attr = el.attributes, attrLength,
@@ -171,7 +32,7 @@ module.exports = function toJson(el) {
     return node
 }
 
-},{}],4:[function(_dereq_,module,exports){
+},{}],3:[function(_dereq_,module,exports){
 
 module.exports = function toJson(str, parent) {
     var i = 0,
@@ -303,13 +164,7 @@ module.exports = function toJson(str, parent) {
     return parent
 }
 
-},{}],5:[function(_dereq_,module,exports){
-module.exports = exports = _dereq_('./Renderer')
-exports.domToJson = _dereq_('./domToJson')
-exports.htmlToJson = _dereq_('./htmlToJson')
-exports.docDiff = _dereq_('docdiff')
-
-},{"./Renderer":2,"./domToJson":3,"./htmlToJson":4,"docdiff":8}],6:[function(_dereq_,module,exports){
+},{}],4:[function(_dereq_,module,exports){
 
 /**
  * Find value in json obj using dots path notation.
@@ -344,7 +199,152 @@ module.exports = function(obj, path) {
     return obj
 }
 
-},{}],7:[function(_dereq_,module,exports){
+},{}],5:[function(_dereq_,module,exports){
+var domToJson = _dereq_('./domToJson'),
+    htmlToJson = _dereq_('./htmlToJson'),
+    keypath = _dereq_('./keypath'),
+    docdiff = _dereq_('docdiff')
+
+var createTextNode = document.createTextNode.bind(document),
+    createElement = document.createElement.bind(document)
+
+/**
+ * Renderer constructor.
+ *
+ * @param {Element} el dom node for serializing and updating.
+ * @api public
+ */
+function Renderer(el) {
+    if (!(this instanceof Renderer)) return new Renderer(el)
+    this.el = el
+    this.tree = null
+    this.serialize()
+}
+
+module.exports = Renderer
+
+Renderer.domToJson = domToJson
+Renderer.htmlToJson = htmlToJson
+Renderer.keypath = keypath
+Renderer.docdiff = docdiff
+
+/**
+ * Properties we don't need to apply to the dom from the diff.
+ *
+ * @type {Object}
+ * @api public
+ */
+Renderer.IGNORE_PROPERTIES = {
+    parent: true,
+    dom: true,
+    outerHtml: true
+}
+
+/**
+ * Read DOM state.
+ *
+ * @return {Object} state
+ * @api public
+ */
+Renderer.prototype.serialize = function() {
+    return this.tree = domToJson(this.el).children
+}
+
+/**
+ * Render changes to DOM.
+ *
+ * @param {String} html
+ * @return {Renderer} this
+ * @api public
+ */
+Renderer.prototype.render = function(html) {
+    var newTree, changes
+
+    // this.el is empty, nothing to diff.
+    if (!this.tree) {
+        this.el.innerHTML = html
+        this.serialize()
+        return this
+    }
+
+    newTree = htmlToJson(html).children
+    changes = docdiff(this.tree, newTree)
+
+    console.log('current', this.tree)
+    console.log('new', newTree)
+
+    changes.forEach(this._apply, this)
+
+    this.tree = newTree
+
+    return this
+}
+
+Renderer.prototype._apply = function(change) {
+    var prop = change.path[change.path.length - 1],
+        itemPath, item,
+        key,
+        now = change.values.now
+
+    if (Renderer.IGNORE_PROPERTIES[prop]) return
+
+    // Change text node
+    if (prop == 'text') {
+        itemPath = change.path.slice(0, change.path.length - 1)
+        item = keypath(this.tree, itemPath)
+        item.dom.textContent = change.values.now
+    // Create node
+    } else if (prop == 'children') {
+        if (change.change == 'add') {
+            itemPath = change.path.slice(0, change.path.length - 1)
+            item = keypath(this.tree, itemPath)
+            for (key in now) {
+                if (key != 'length') {
+                    item.dom.appendChild(
+                        this._createElement(
+                            now[key].name,
+                            now[key].text,
+                            now[key].attributes
+                        )
+                    )
+                }
+            }
+        }
+    // Change attributes
+    } else {
+        if (change.change == 'update' || change.change == 'add') {
+            itemPath = change.path.slice(0, change.path.length - 2)
+            item = keypath(this.tree, itemPath)
+            item.dom.setAttribute(prop, change.values.now)
+        } else if (change.change == 'remove') {
+            itemPath = change.path.slice(0, change.path.length - 1)
+            item = keypath(this.tree, itemPath)
+            for (prop in change.values.original) {
+                item.dom.removeAttribute(prop)
+            }
+        }
+    }
+}
+
+/**
+ * Create dom element.
+ *
+ * @param {String} name - #text, div etc.
+ * @param {String} [text] text for text node
+ * @param {Object} [attrs] node attributes
+ * @return {Element}
+ */
+Renderer.prototype._createElement = function(name, text, attrs) {
+    var el, attr
+
+    el = name == '#text' ? createTextNode(text) : createElement(name)
+
+    for (attr in attrs) el.setAttribute(attr, attrs[attr])
+
+    return el
+}
+
+},{"./domToJson":2,"./htmlToJson":3,"./keypath":4,"docdiff":7}],6:[function(_dereq_,module,exports){
 
 var utils = _dereq_('./utils');
 
@@ -414,7 +414,7 @@ module.exports = function (original, now) {
 
   return diff;
 };
-},{"./utils":9}],8:[function(_dereq_,module,exports){
+},{"./utils":8}],7:[function(_dereq_,module,exports){
 
 var arraydiff = _dereq_('./arraydiff');
 var utils = _dereq_('./utils');
@@ -503,7 +503,7 @@ function Change (path, key, change, type, now, original, added, removed) {
   }
 }
 
-},{"./arraydiff":7,"./utils":9}],9:[function(_dereq_,module,exports){
+},{"./arraydiff":6,"./utils":8}],8:[function(_dereq_,module,exports){
 
 /**
  * isObject
