@@ -126,6 +126,26 @@
     </script>
 </section>
 
+<section>
+    Remove element
+    <div id="test6" class="test"></div>
+    <button onclick="render(6, 0)">Render 1</button>
+    <button onclick="render(6, 1)">Render 2</button>
+    <script id="tpl6-0" type="text">
+        <div class="content">
+            <div class="item item1"></div>
+            <div class="item item2"></div>
+            <div class="item item3"></div>
+        </div>
+    </script>
+    <script id="tpl6-1" type="text">
+        <div class="content">
+            <div class="item item1"></div>
+            <div class="item item3"></div>
+        </div>
+    </script>
+</section>
+
 <script>
 (function() {
     function $(s) {

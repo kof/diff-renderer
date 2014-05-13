@@ -164,6 +164,8 @@ Renderer.prototype._apply = function(change) {
                     }
                 }
             }
+        } else if (change.change == 'remove') {
+            this._removeNode(change.values.original.node)
         }
     // Change/add attributes
     } else {
@@ -201,6 +203,10 @@ Renderer.prototype._createNode = function(name, text, attrs) {
 
 Renderer.prototype._insertAfter = function(prev, next) {
     prev.parentNode.insertBefore(next, prev.nextSibling)
+}
+
+Renderer.prototype._removeNode = function(node) {
+    node.parentNode.removeChild(node)
 }
 
 },{"./keypath":2,"./serialize-dom":4,"./serialize-html":5,"docdiff":7}],4:[function(_dereq_,module,exports){
