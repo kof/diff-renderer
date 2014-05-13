@@ -26,11 +26,7 @@ module.exports = function(obj, path) {
     parts = typeof path == 'string' ? path.split('.') : path
 
     for (i = 0; i < parts.length; i++) {
-        if (obj[parts[i]]) {
-            obj = obj[parts[i]]
-        } else if (parts[i + 1]) {
-            return
-        }
+        obj = obj[parts[i]]
     }
 
     return obj
@@ -110,8 +106,8 @@ Renderer.prototype.render = function(html) {
     console.log('current', this.tree)
     console.log('new', newTree)
 
+    this._newTree =  newTree
     changes.forEach(this._apply, this)
-
     this.tree = newTree
 
     return this
@@ -119,7 +115,9 @@ Renderer.prototype.render = function(html) {
 
 Renderer.prototype._apply = function(change) {
     var prop = change.path[change.path.length - 1],
-        itemPath, item,
+        propIsNum = !isNaN(prop),
+        pos,
+        itemPath, item, newNode,
         key,
         now = change.values.now
 
@@ -129,21 +127,40 @@ Renderer.prototype._apply = function(change) {
     if (prop == 'text') {
         itemPath = change.path.slice(0, change.path.length - 1)
         item = keypath(this.tree, itemPath)
-        item.dom.textContent = change.values.now
+        item.dom.textContent = now
     // Create node
-    } else if (prop == 'children') {
+    } else if (prop == 'children' || propIsNum) {
         if (change.change == 'add') {
-            itemPath = change.path.slice(0, change.path.length - 1)
-            item = keypath(this.tree, itemPath)
-            for (key in now) {
-                if (key != 'length') {
-                    item.dom.appendChild(
-                        this._createNode(
-                            now[key].name,
-                            now[key].text,
-                            now[key].attributes
+            // Insert node at specific position.
+            if (propIsNum) {
+                itemPath = change.path.slice(0, change.path.length - 1)
+                // Add prev node to the path.
+                itemPath.push(prop - 1)
+                item = keypath(this.tree, itemPath)
+                // In case current change is based on previous change, previous
+                // of the same iteration, previous change is not applied to the
+                // current tree yet.
+                if (!item) item = keypath(this._newTree, itemPath)
+
+                newNode = this._createNode(now.name, now.text, now.attributes)
+                this._insertAfter(item.dom, newNode)
+
+                // Link the node in the new tree.
+                keypath(this._newTree, change.path).dom = newNode
+            // Append children.
+            } else {
+                itemPath = change.path.slice(0, change.path.length - 1)
+                item = keypath(this.tree, itemPath)
+                for (key in now) {
+                    if (key != 'length') {
+                        item.dom.appendChild(
+                            this._createNode(
+                                now[key].name,
+                                now[key].text,
+                                now[key].attributes
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -152,7 +169,7 @@ Renderer.prototype._apply = function(change) {
         if (change.change == 'update' || change.change == 'add') {
             itemPath = change.path.slice(0, change.path.length - 2)
             item = keypath(this.tree, itemPath)
-            item.dom.setAttribute(prop, change.values.now)
+            item.dom.setAttribute(prop, now)
         } else if (change.change == 'remove') {
             itemPath = change.path.slice(0, change.path.length - 1)
             item = keypath(this.tree, itemPath)
@@ -179,6 +196,10 @@ Renderer.prototype._createNode = function(name, text, attrs) {
     for (attr in attrs) el.setAttribute(attr, attrs[attr])
 
     return el
+}
+
+Renderer.prototype._insertAfter = function(prev, next) {
+    prev.parentNode.insertBefore(next, prev.nextSibling)
 }
 
 },{"./keypath":2,"./serialize-dom":4,"./serialize-html":5,"docdiff":7}],4:[function(_dereq_,module,exports){

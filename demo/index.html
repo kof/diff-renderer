@@ -12,7 +12,7 @@
         height: 100%;
     }
 
-    .item {
+    .item, .item2 {
         background: green;
         width: 100%;
         height: 20px;
@@ -22,66 +22,79 @@
         background: orange;
     }
 </style>
+
 <section>
     Render into empty div.
     <div id="test1" class="test"></div>
     <button onclick="firstRender()">Test</button>
+    <script id="tpl1" type="text">
+        <div class="content">
+            <div class="item"></div>
+            <div class="item"></div>
+            <div class="item"></div>
+        </div>
+    </script>
 </section>
 
 <section>
     Change/remove/add attributes
     <div id="test2" class="test"></div>
     <button onclick="renderDiff(2)">Test</button>
+    <script id="tpl2-0" type="text">
+        <div class="content">
+            <div class="item"></div>
+            <div class="item"></div>
+            <div class="item"></div>
+        </div>
+    </script>
+    <script id="tpl2-1" type="text">
+        <div class="content content1">
+            <div class="item"></div>
+            <div class="item" id="item-id"></div>
+            <div></div>
+        </div>
+    </script>
 </section>
 
 <section>
     Change/remove/add text nodes
     <div id="test3" class="test"></div>
     <button onclick="renderDiff(3)">Test</button>
+    <script id="tpl3-0" type="text">
+        <div class="content">
+            aaa
+            <div>aaa</div>
+            aaa
+            <div></div>
+        </div>
+    </script>
+    <script id="tpl3-1" type="text">
+        <div class="content">
+            bbb
+            <div>bbb</div>
+            <div>bbb</div>
+        </div>
+    </script>
 </section>
 
-
-<script id="tpl1" type="text">
-    <div class="content">
-        <div class="item"></div>
-        <div class="item"></div>
-        <div class="item"></div>
-    </div>
-</script>
-
-<script id="tpl2-0" type="text">
-    <div class="content">
-        <div class="item"></div>
-        <div class="item"></div>
-        <div class="item"></div>
-    </div>
-</script>
-
-
-<script id="tpl2-1" type="text">
-    <div class="content content1">
-        <div class="item"></div>
-        <div class="item" id="item-id"></div>
-        <div></div>
-    </div>
-</script>
-
-<script id="tpl3-0" type="text">
-    <div class="content">
-        aaa
-        <div>aaa</div>
-        aaa
-        <div></div>
-    </div>
-</script>
-
-<script id="tpl3-1" type="text">
-    <div class="content">
-        bbb
-        <div>bbb</div>
-        <div>bbb</div>
-    </div>
-</script>
+<section>
+    Insert an element at the end.
+    <div id="test4" class="test"></div>
+    <button onclick="renderDiff(4)">Test</button>
+    <script id="tpl4-0" type="text">
+        <div class="content">
+            <div class="item"></div>
+            <div class="item"></div>
+        </div>
+    </script>
+    <script id="tpl4-1" type="text">
+        <div class="content">
+            <div class="item"></div>
+            <div class="item"></div>
+            <div class="item2"></div>
+        </div>
+    </script>
+</section>
 
 
 <script>

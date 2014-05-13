@@ -6,6 +6,6 @@ bench:
 	node bench
 
 test:
-	qunit -c serializeHtml:./lib/serialize-html.js -d hashify:./lib/hashify.js -t ./test/serialize-html.js
+	qunit -c serializeHtml:./lib/serialize-html.js -d hashify:./lib/hashify.js -t ./test/serialize-html.js --cov
 
 .PHONY: build bench test
