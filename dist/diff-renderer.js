@@ -70,7 +70,8 @@ Renderer.docdiff = docdiff
 Renderer.IGNORE_PROPERTIES = {
     parent: true,
     node: true,
-    outerHtml: true
+    outerHtml: true,
+    length: true
 }
 
 /**
