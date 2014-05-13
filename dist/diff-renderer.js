@@ -82,7 +82,7 @@ module.exports = function toJson(str, parent) {
                         inTagName = false
                         if (!tag.name) {
                             inCloser = true
-                            if (parent.parent )parent = parent.parent
+                            if (parent.parent) parent = parent.parent
                         }
                     } else if (isClose) {
                         toJson(str.substr(i + 1), inClosing || inCloser ? parent : tag)
@@ -155,8 +155,6 @@ module.exports = function toJson(str, parent) {
         }
 
         if (isClose) inClosing = false
-
-        //console.log(current, inTag, inText)
 
         ++i
     }
