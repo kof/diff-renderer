@@ -201,7 +201,7 @@ test('children 5', function() {
     equal(node.children.length, 1, 'children length')
 })
 
-test('children 5', function() {
+test('children 6', function() {
     var node = htmlToJson('<a><b></b></a>').children[0]
     addIds(node)
     equal(node.name, 'a', 'node name')
@@ -211,7 +211,7 @@ test('children 5', function() {
     equal(node.children.length, 1, 'children length')
 })
 
-test('children 6', function() {
+test('children 7', function() {
     var node = htmlToJson('<a><b class="c"></b></a>').children[0]
     addIds(node)
     equal(node.name, 'a', 'node name')
