@@ -1,5 +1,5 @@
 test('text node 0', function() {
-    var node = htmlToJson('a').children[0]
+    var node = serializeHtml('a').children[0]
     hashify(node)
     equal(node.name, '#text', 'node name')
     equal(node.text, 'a', 'node text')
@@ -7,7 +7,7 @@ test('text node 0', function() {
 })
 
 test('text node 1', function() {
-    var node = htmlToJson(' abc ').children[0]
+    var node = serializeHtml(' abc ').children[0]
     hashify(node)
     equal(node.name, '#text', 'node name')
     equal(node.text, ' abc ', 'node text')
@@ -15,41 +15,41 @@ test('text node 1', function() {
 })
 
 test('empty node 0', function() {
-    var node = htmlToJson('<a/>').children[0]
+    var node = serializeHtml('<a/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 6422626, 'node hash')
 })
 
 test('empty node 1', function() {
-    var node = htmlToJson('< a/>').children[0]
+    var node = serializeHtml('< a/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 6422626, 'node hash')
 })
 
 test('empty node 2', function() {
-    var node = htmlToJson('< a / >').children[0]
+    var node = serializeHtml('< a / >').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 6422626, 'node hash')
 })
 
 test('empty node 3', function() {
-    var node = htmlToJson('<\na\n/\n>').children[0]
+    var node = serializeHtml('<\na\n/\n>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 6422626, 'node hash')
 })
 
 test('closing tag', function() {
-    deepEqual(htmlToJson('</a>'), {})
-    deepEqual(htmlToJson('< / a\n >'), {})
-    deepEqual(htmlToJson('<\n/\n a\n >'), {})
+    deepEqual(serializeHtml('</a>'), {})
+    deepEqual(serializeHtml('< / a\n >'), {})
+    deepEqual(serializeHtml('<\n/\n a\n >'), {})
 })
 
 test('attributes 0', function() {
-    var node = htmlToJson('<a id/>').children[0]
+    var node = serializeHtml('<a id/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     deepEqual(node.attributes, {id: ''}, 'attributes')
@@ -57,7 +57,7 @@ test('attributes 0', function() {
 })
 
 test('attributes 1', function() {
-    var node = htmlToJson('<a id=""/>').children[0]
+    var node = serializeHtml('<a id=""/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     deepEqual(node.attributes, {id: ''}, 'attributes')
@@ -65,7 +65,7 @@ test('attributes 1', function() {
 })
 
 test('attributes 2', function() {
-    var node = htmlToJson('<a id=\'\'/>').children[0]
+    var node = serializeHtml('<a id=\'\'/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     deepEqual(node.attributes, {id: ''}, 'attribtues')
@@ -73,7 +73,7 @@ test('attributes 2', function() {
 })
 
 test('attributes 3', function() {
-    var node = htmlToJson('<a id="a"/>').children[0]
+    var node = serializeHtml('<a id="a"/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     deepEqual(node.attributes, {id: 'a'}, 'attributes')
@@ -81,7 +81,7 @@ test('attributes 3', function() {
 })
 
 test('attributes 4', function() {
-    var node = htmlToJson('<a id = \'a\'/>').children[0]
+    var node = serializeHtml('<a id = \'a\'/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     deepEqual(node.attributes, {id: 'a'}, 'attributes')
@@ -89,7 +89,7 @@ test('attributes 4', function() {
 })
 
 test('attributes 5', function() {
-    var node = htmlToJson('<a id\n=\n"a\'"/>').children[0]
+    var node = serializeHtml('<a id\n=\n"a\'"/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     deepEqual(node.attributes, {id: "a'"}, 'attributes')
@@ -97,7 +97,7 @@ test('attributes 5', function() {
 })
 
 test('attributes 6', function() {
-    var node = htmlToJson('<a id\n=\n"a=\'b\'"\n/>').children[0]
+    var node = serializeHtml('<a id\n=\n"a=\'b\'"\n/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     deepEqual(node.attributes, {id: "a='b'"}, 'attributes')
@@ -105,7 +105,7 @@ test('attributes 6', function() {
 })
 
 test('attributes 7', function() {
-    var node = htmlToJson('<a id="a" class="\nb "/>').children[0]
+    var node = serializeHtml('<a id="a" class="\nb "/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     deepEqual(node.attributes, {id: 'a', class: '\nb '}, 'attributes')
@@ -113,7 +113,7 @@ test('attributes 7', function() {
 })
 
 test('attributes 8', function() {
-    var node = htmlToJson('<a attr1="first"attr2="second"/>').children[0]
+    var node = serializeHtml('<a attr1="first"attr2="second"/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     deepEqual(node.attributes, {attr1: 'first', attr2: 'second'}, 'attributes')
@@ -121,7 +121,7 @@ test('attributes 8', function() {
 })
 
 test('attributes 9', function() {
-    var node = htmlToJson('<a attr="<p>"/>').children[0]
+    var node = serializeHtml('<a attr="<p>"/>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     deepEqual(node.attributes, {attr: '<p>'}, 'attributes')
@@ -129,7 +129,7 @@ test('attributes 9', function() {
 })
 
 test('children 0', function() {
-    var node = htmlToJson('<a>a</a>').children[0]
+    var node = serializeHtml('<a>a</a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 168362667, 'node hash')
@@ -139,7 +139,7 @@ test('children 0', function() {
 })
 
 test('children 1', function() {
-    var node = htmlToJson('<a>\n</a>').children[0]
+    var node = serializeHtml('<a>\n</a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 162660948, 'node hash')
@@ -150,7 +150,7 @@ test('children 1', function() {
 })
 
 test('children 2', function() {
-    var node = htmlToJson('<a> a \n b </a>').children[0]
+    var node = serializeHtml('<a> a \n b </a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 479593367, 'node hash')
@@ -161,7 +161,7 @@ test('children 2', function() {
 })
 
 test('children 3', function() {
-    var node = htmlToJson('<a>\n<b></b></a>').children[0]
+    var node = serializeHtml('<a>\n<b></b></a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 208143030, 'node hash')
@@ -174,7 +174,7 @@ test('children 3', function() {
 })
 
 test('children 4', function() {
-    var node = htmlToJson('<a>\n<b/>\n\n<c/></a>').children[0]
+    var node = serializeHtml('<a>\n<b/>\n\n<c/></a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 762774805, 'node hash')
@@ -192,7 +192,7 @@ test('children 4', function() {
 })
 
 test('children 5', function() {
-    var node = htmlToJson('<a><a/></a>').children[0]
+    var node = serializeHtml('<a><a/></a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 19202243, 'node hash')
@@ -202,7 +202,7 @@ test('children 5', function() {
 })
 
 test('children 6', function() {
-    var node = htmlToJson('<a><b></b></a>').children[0]
+    var node = serializeHtml('<a><b></b></a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 19267780, 'node hash')
@@ -212,7 +212,7 @@ test('children 6', function() {
 })
 
 test('children 7', function() {
-    var node = htmlToJson('<a><b class="c"></b></a>').children[0]
+    var node = serializeHtml('<a><b class="c"></b></a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 240255805, 'node hash')
@@ -223,7 +223,7 @@ test('children 7', function() {
 })
 
 test('collection 0', function() {
-    var nodes = htmlToJson('<a/><b/>').children
+    var nodes = serializeHtml('<a/><b/>').children
     hashify(nodes)
     equal(nodes[0].name, 'a', 'node 0 name')
     equal(nodes[0].hash, 6422626, 'node 0 hash')
@@ -233,7 +233,7 @@ test('collection 0', function() {
 })
 
 test('collection 1', function() {
-    var node = htmlToJson('<a><b/><c/></a>').children[0]
+    var node = serializeHtml('<a><b/><c/></a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 38600999, 'node hash')
@@ -245,7 +245,7 @@ test('collection 1', function() {
 })
 
 test('collection 2', function() {
-    var node = htmlToJson('<a><b></b><c/></a>').children[0]
+    var node = serializeHtml('<a><b></b><c/></a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
     equal(node.hash, 38600999, 'node hash')

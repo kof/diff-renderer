@@ -1,8 +1,195 @@
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.DiffRenderer=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/renderer')
 
-},{"./lib/renderer":5}],2:[function(_dereq_,module,exports){
-module.exports = function toJson(el) {
+},{"./lib/renderer":3}],2:[function(_dereq_,module,exports){
+
+/**
+ * Find value in json obj using dots path notation.
+ *
+ * http://docs.mongodb.org/manual/core/document/#document-dot-notation
+ *
+ * {a: {b: {c: 3}}}
+ * 'a.b.c' // 3
+ *
+ * {a: {b: {c: [1,2,3]}}}
+ * 'a.b.c.1' // 2
+ *
+ * @param {Object|Array} obj
+ * @param {String|Array} path
+ * @return {Mixed}
+ */
+module.exports = function(obj, path) {
+    var parts, i
+
+    if (!obj || !path) return obj
+
+    parts = typeof path == 'string' ? path.split('.') : path
+
+    for (i = 0; i < parts.length; i++) {
+        if (obj[parts[i]]) {
+            obj = obj[parts[i]]
+        } else if (parts[i + 1]) {
+            return
+        }
+    }
+
+    return obj
+}
+
+},{}],3:[function(_dereq_,module,exports){
+var serializeDom = _dereq_('./serialize-dom'),
+    serializeHtml = _dereq_('./serialize-html'),
+    keypath = _dereq_('./keypath'),
+    docdiff = _dereq_('docdiff')
+
+var createTextNode = document.createTextNode.bind(document),
+    createElement = document.createElement.bind(document)
+
+/**
+ * Renderer constructor.
+ *
+ * @param {Element} el dom node for serializing and updating.
+ * @api public
+ */
+function Renderer(el) {
+    if (!(this instanceof Renderer)) return new Renderer(el)
+    this.el = el
+    this.tree = null
+    this.serialize()
+}
+
+module.exports = Renderer
+
+Renderer.serializeDom = serializeDom
+Renderer.serializeHtml = serializeHtml
+Renderer.keypath = keypath
+Renderer.docdiff = docdiff
+
+/**
+ * Properties we don't need to apply to the dom from the diff.
+ *
+ * @type {Object}
+ * @api public
+ */
+Renderer.IGNORE_PROPERTIES = {
+    parent: true,
+    dom: true,
+    outerHtml: true
+}
+
+/**
+ * Read DOM state.
+ *
+ * @return {Object} state
+ * @api public
+ */
+Renderer.prototype.serialize = function() {
+    return this.tree = serializeDom(this.el).children
+}
+
+/**
+ * Render changes to DOM.
+ *
+ * @param {String} html
+ * @return {Renderer} this
+ * @api public
+ */
+Renderer.prototype.render = function(html) {
+    var newTree, changes
+
+    // this.el is empty, nothing to diff.
+    if (!this.tree) {
+        this.el.innerHTML = html
+        this.serialize()
+        return this
+    }
+
+    newTree = serializeHtml(html).children
+    changes = docdiff(this.tree, newTree)
+
+    console.log('current', this.tree)
+    console.log('new', newTree)
+
+    changes.forEach(this._apply, this)
+
+    this.tree = newTree
+
+    return this
+}
+
+Renderer.prototype._apply = function(change) {
+    var prop = change.path[change.path.length - 1],
+        itemPath, item,
+        key,
+        now = change.values.now
+
+    if (Renderer.IGNORE_PROPERTIES[prop]) return
+
+    // Change text node
+    if (prop == 'text') {
+        itemPath = change.path.slice(0, change.path.length - 1)
+        item = keypath(this.tree, itemPath)
+        item.dom.textContent = change.values.now
+    // Create node
+    } else if (prop == 'children') {
+        if (change.change == 'add') {
+            itemPath = change.path.slice(0, change.path.length - 1)
+            item = keypath(this.tree, itemPath)
+            for (key in now) {
+                if (key != 'length') {
+                    item.dom.appendChild(
+                        this._createNode(
+                            now[key].name,
+                            now[key].text,
+                            now[key].attributes
+                        )
+                    )
+                }
+            }
+        }
+    // Change attributes
+    } else {
+        if (change.change == 'update' || change.change == 'add') {
+            itemPath = change.path.slice(0, change.path.length - 2)
+            item = keypath(this.tree, itemPath)
+            item.dom.setAttribute(prop, change.values.now)
+        } else if (change.change == 'remove') {
+            itemPath = change.path.slice(0, change.path.length - 1)
+            item = keypath(this.tree, itemPath)
+            for (prop in change.values.original) {
+                item.dom.removeAttribute(prop)
+            }
+        }
+    }
+}
+
+/**
+ * Create dom element.
+ *
+ * @param {String} name - #text, div etc.
+ * @param {String} [text] text for text node
+ * @param {Object} [attrs] node attributes
+ * @return {Element}
+ */
+Renderer.prototype._createNode = function(name, text, attrs) {
+    var el, attr
+
+    el = name == '#text' ? createTextNode(text) : createElement(name)
+
+    for (attr in attrs) el.setAttribute(attr, attrs[attr])
+
+    return el
+}
+
+},{"./keypath":2,"./serialize-dom":4,"./serialize-html":5,"docdiff":7}],4:[function(_dereq_,module,exports){
+/**
+ * Walk through the dom and create the same tree like html serializer.
+ *
+ * @param {Element} el
+ * @return {Object}
+ * @api private
+ */
+module.exports = function serialize(el) {
     var node = {name: el.nodeName.toLowerCase(), dom: el},
         attr = el.attributes, attrLength,
         childNodes = el.childNodes, childNodesLength,
@@ -25,16 +212,23 @@ module.exports = function toJson(el) {
         node.children = {length: childNodes.length}
         childNodesLength = childNodes.length
         for (i = 0; i < childNodesLength; i++) {
-            node.children[i] = toJson(childNodes[i])
+            node.children[i] = serialize(childNodes[i])
         }
     }
 
     return node
 }
 
-},{}],3:[function(_dereq_,module,exports){
-
-module.exports = function toJson(str, parent) {
+},{}],5:[function(_dereq_,module,exports){
+/**
+ * Parse html and create a json tree.
+ *
+ * @param {String} html
+ * @param {Object} [parent]
+ * @return {Object}
+ * @api private
+ */
+module.exports = function serialize(str, parent) {
     var i = 0,
         end = false,
         added = false,
@@ -85,7 +279,7 @@ module.exports = function toJson(str, parent) {
                             if (parent.parent) parent = parent.parent
                         }
                     } else if (isClose) {
-                        toJson(str.substr(i + 1), inClosing || inCloser ? parent : tag)
+                        serialize(str.substr(i + 1), inClosing || inCloser ? parent : tag)
                         return parent
                     } else if (!isWhite) {
                         tag.name += current
@@ -104,7 +298,7 @@ module.exports = function toJson(str, parent) {
                             tag.attributes[attrName] = ''
                         }
                     } else if (isClose) {
-                        toJson(str.substr(i + 1), inClosing || inCloser ? parent : tag)
+                        serialize(str.substr(i + 1), inClosing || inCloser ? parent : tag)
                         return parent
                     } else if (!isWhite) {
                         attrName += current
@@ -132,7 +326,7 @@ module.exports = function toJson(str, parent) {
                 }
             } else if (isOpen) {
                 if (inText) {
-                    toJson(str.substr(i), parent)
+                    serialize(str.substr(i), parent)
                     return parent
                 }
                 inTag = true
@@ -162,187 +356,7 @@ module.exports = function toJson(str, parent) {
     return parent
 }
 
-},{}],4:[function(_dereq_,module,exports){
-
-/**
- * Find value in json obj using dots path notation.
- *
- * http://docs.mongodb.org/manual/core/document/#document-dot-notation
- *
- * {a: {b: {c: 3}}}
- * 'a.b.c' // 3
- *
- * {a: {b: {c: [1,2,3]}}}
- * 'a.b.c.1' // 2
- *
- * @param {Object|Array} obj
- * @param {String|Array} path
- * @return {Mixed}
- */
-module.exports = function(obj, path) {
-    var parts, i
-
-    if (!obj || !path) return obj
-
-    parts = typeof path == 'string' ? path.split('.') : path
-
-    for (i = 0; i < parts.length; i++) {
-        if (obj[parts[i]]) {
-            obj = obj[parts[i]]
-        } else if (parts[i + 1]) {
-            return
-        }
-    }
-
-    return obj
-}
-
-},{}],5:[function(_dereq_,module,exports){
-var domToJson = _dereq_('./domToJson'),
-    htmlToJson = _dereq_('./htmlToJson'),
-    keypath = _dereq_('./keypath'),
-    docdiff = _dereq_('docdiff')
-
-var createTextNode = document.createTextNode.bind(document),
-    createElement = document.createElement.bind(document)
-
-/**
- * Renderer constructor.
- *
- * @param {Element} el dom node for serializing and updating.
- * @api public
- */
-function Renderer(el) {
-    if (!(this instanceof Renderer)) return new Renderer(el)
-    this.el = el
-    this.tree = null
-    this.serialize()
-}
-
-module.exports = Renderer
-
-Renderer.domToJson = domToJson
-Renderer.htmlToJson = htmlToJson
-Renderer.keypath = keypath
-Renderer.docdiff = docdiff
-
-/**
- * Properties we don't need to apply to the dom from the diff.
- *
- * @type {Object}
- * @api public
- */
-Renderer.IGNORE_PROPERTIES = {
-    parent: true,
-    dom: true,
-    outerHtml: true
-}
-
-/**
- * Read DOM state.
- *
- * @return {Object} state
- * @api public
- */
-Renderer.prototype.serialize = function() {
-    return this.tree = domToJson(this.el).children
-}
-
-/**
- * Render changes to DOM.
- *
- * @param {String} html
- * @return {Renderer} this
- * @api public
- */
-Renderer.prototype.render = function(html) {
-    var newTree, changes
-
-    // this.el is empty, nothing to diff.
-    if (!this.tree) {
-        this.el.innerHTML = html
-        this.serialize()
-        return this
-    }
-
-    newTree = htmlToJson(html).children
-    changes = docdiff(this.tree, newTree)
-
-    console.log('current', this.tree)
-    console.log('new', newTree)
-
-    changes.forEach(this._apply, this)
-
-    this.tree = newTree
-
-    return this
-}
-
-Renderer.prototype._apply = function(change) {
-    var prop = change.path[change.path.length - 1],
-        itemPath, item,
-        key,
-        now = change.values.now
-
-    if (Renderer.IGNORE_PROPERTIES[prop]) return
-
-    // Change text node
-    if (prop == 'text') {
-        itemPath = change.path.slice(0, change.path.length - 1)
-        item = keypath(this.tree, itemPath)
-        item.dom.textContent = change.values.now
-    // Create node
-    } else if (prop == 'children') {
-        if (change.change == 'add') {
-            itemPath = change.path.slice(0, change.path.length - 1)
-            item = keypath(this.tree, itemPath)
-            for (key in now) {
-                if (key != 'length') {
-                    item.dom.appendChild(
-                        this._createElement(
-                            now[key].name,
-                            now[key].text,
-                            now[key].attributes
-                        )
-                    )
-                }
-            }
-        }
-    // Change attributes
-    } else {
-        if (change.change == 'update' || change.change == 'add') {
-            itemPath = change.path.slice(0, change.path.length - 2)
-            item = keypath(this.tree, itemPath)
-            item.dom.setAttribute(prop, change.values.now)
-        } else if (change.change == 'remove') {
-            itemPath = change.path.slice(0, change.path.length - 1)
-            item = keypath(this.tree, itemPath)
-            for (prop in change.values.original) {
-                item.dom.removeAttribute(prop)
-            }
-        }
-    }
-}
-
-/**
- * Create dom element.
- *
- * @param {String} name - #text, div etc.
- * @param {String} [text] text for text node
- * @param {Object} [attrs] node attributes
- * @return {Element}
- */
-Renderer.prototype._createElement = function(name, text, attrs) {
-    var el, attr
-
-    el = name == '#text' ? createTextNode(text) : createElement(name)
-
-    for (attr in attrs) el.setAttribute(attr, attrs[attr])
-
-    return el
-}
-
-},{"./domToJson":2,"./htmlToJson":3,"./keypath":4,"docdiff":7}],6:[function(_dereq_,module,exports){
+},{}],6:[function(_dereq_,module,exports){
 
 var utils = _dereq_('./utils');
 
