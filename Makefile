@@ -6,6 +6,6 @@ bench:
 	node bench
 
 test:
-	qunit -c htmlToJson:./lib/htmlToJson.js -d addIds:./lib/addIds.js -t ./test/htmlToJson.js
+	qunit -c htmlToJson:./lib/htmlToJson.js -d hashify:./lib/hashify.js -t ./test/htmlToJson.js
 
 .PHONY: build bench test
