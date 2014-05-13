@@ -24,30 +24,18 @@
 </style>
 
 <section>
-    Render into empty div.
-    <div id="test1" class="test"></div>
-    <button onclick="firstRender()">Test</button>
-    <script id="tpl1" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-</section>
-
-<section>
     Change/remove/add attributes
-    <div id="test2" class="test"></div>
-    <button onclick="renderDiff(2)">Test</button>
-    <script id="tpl2-0" type="text">
+    <div id="test1" class="test"></div>
+    <button onclick="render(1, 0)">Render 1</button>
+    <button onclick="render(1, 1)">Render 2</button>
+    <script id="tpl1-0" type="text">
         <div class="content">
             <div class="item"></div>
             <div class="item"></div>
             <div class="item"></div>
         </div>
     </script>
-    <script id="tpl2-1" type="text">
+    <script id="tpl1-1" type="text">
         <div class="content content1">
             <div class="item"></div>
             <div class="item" id="item-id"></div>
@@ -58,9 +46,10 @@
 
 <section>
     Change/remove/add text nodes
-    <div id="test3" class="test"></div>
-    <button onclick="renderDiff(3)">Test</button>
-    <script id="tpl3-0" type="text">
+    <div id="test2" class="test"></div>
+    <button onclick="render(2, 0)">Render 1</button>
+    <button onclick="render(2, 1)">Render 2</button>
+    <script id="tpl2-0" type="text">
         <div class="content">
             aaa
             <div>aaa</div>
@@ -68,7 +57,7 @@
             <div></div>
         </div>
     </script>
-    <script id="tpl3-1" type="text">
+    <script id="tpl2-1" type="text">
         <div class="content">
             bbb
             <div>bbb</div>
@@ -79,15 +68,16 @@
 
 <section>
     Insert an element at the end.
-    <div id="test4" class="test"></div>
-    <button onclick="renderDiff(4)">Test</button>
-    <script id="tpl4-0" type="text">
+    <div id="test3" class="test"></div>
+    <button onclick="render(3, 0)">Render 1</button>
+    <button onclick="render(3, 1)">Render 2</button>
+    <script id="tpl3-0" type="text">
         <div class="content">
             <div class="item"></div>
             <div class="item"></div>
         </div>
     </script>
-    <script id="tpl4-1" type="text">
+    <script id="tpl3-1" type="text">
         <div class="content">
             <div class="item"></div>
             <div class="item"></div>
@@ -96,6 +86,25 @@
     </script>
 </section>
 
+<section>
+    Insert an element at the beginning.
+    <div id="test4" class="test"></div>
+    <button onclick="render(4, 0)">Render 1</button>
+    <button onclick="render(4, 1)">Render 2</button>
+    <script id="tpl4-0" type="text">
+        <div class="content">
+            <div class="item"></div>
+            <div class="item"></div>
+        </div>
+    </script>
+    <script id="tpl4-1" type="text">
+        <div class="content">
+            <div class="item2"></div>
+            <div class="item"></div>
+            <div class="item"></div>
+        </div>
+    </script>
+</section>
 
 <script>
 (function() {
@@ -103,15 +112,11 @@
         return document.querySelectorAll(s)
     }
 
-    window.firstRender = function() {
-        new DiffRenderer($('#test1')[0]).render($('#tpl1')[0].innerHTML.trim())
-    }
+    var cache  = {}
 
-    window.renderDiff = function(nr) {
-        var renderer = new DiffRenderer($('#test' + nr)[0])
-
-        renderer.render($('#tpl' + nr + '-0')[0].innerHTML.trim())
-        renderer.render($('#tpl' + nr + '-1')[0].innerHTML.trim())
+    window.render = function(testNr, caseNr) {
+        var renderer = cache[testNr] = cache[testNr] || new DiffRenderer($('#test' + testNr)[0])
+        renderer.render($('#tpl' + testNr + '-' + caseNr)[0].innerHTML.trim())
     }
 }())
 </script>
