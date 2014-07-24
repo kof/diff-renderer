@@ -43,9 +43,9 @@ test('empty node 3', function() {
 })
 
 test('closing tag', function() {
-    deepEqual(serializeHtml('</a>'), {})
-    deepEqual(serializeHtml('< / a\n >'), {})
-    deepEqual(serializeHtml('<\n/\n a\n >'), {})
+    deepEqual(serializeHtml('</a>'), {name: 'root'})
+    deepEqual(serializeHtml('< / a\n >'), {name: 'root'})
+    deepEqual(serializeHtml('<\n/\n a\n >'), {name: 'root'})
 })
 
 test('attributes 0', function() {
@@ -223,13 +223,18 @@ test('children 7', function() {
 })
 
 test('collection 0', function() {
-    var nodes = serializeHtml('<a/><b/>').children
+    var nodes = serializeHtml('<a/><b/><c/>').children
     hashify(nodes)
     equal(nodes[0].name, 'a', 'node 0 name')
     equal(nodes[0].hash, 6422626, 'node 0 hash')
+    equal(nodes[0].parent.name, 'root' , 'node 0 parent')
     equal(nodes[1].name, 'b', 'node 1 name')
     equal(nodes[1].hash, 6488163, 'node 1 hash')
-    equal(nodes.length, 2, 'nodes length')
+    equal(nodes[1].parent.name, 'root' , 'node 1 parent')
+    equal(nodes[2].name, 'c', 'node 2 name')
+    equal(nodes[2].hash, 6553700, 'node 2 hash')
+    equal(nodes[2].parent.name, 'root' , 'node 2 parent')
+    equal(nodes.length, 3, 'nodes length')
 })
 
 test('collection 1', function() {
@@ -254,4 +259,18 @@ test('collection 2', function() {
     equal(node.children[1].name, 'c', 'child 1 name')
     equal(node.children[1].hash, 6553700, 'child 1 hash')
     equal(node.children.length, 2, 'children length')
+})
+
+return
+test('collection 3', function() {
+    var nodes = serializeHtml('<a></a><b></b><c></c>').children
+    console.log(nodes)
+    hashify(nodes)
+    equal(nodes[0].name, 'a', 'node 0 name')
+    equal(nodes[0].hash, 6422626, 'node 0 hash')
+    equal(nodes[1].name, 'b', 'node 1 name')
+    equal(nodes[1].hash, 6488163, 'node 1 hash')
+    equal(nodes[2].name, 'c', 'node 2 name')
+    equal(nodes[2].hash, 6553700, 'node 2 hash')
+    equal(nodes.length, 3, 'nodes length')
 })
