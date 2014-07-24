@@ -162,7 +162,8 @@ bbb
                 })
 
                 $('.render')[0].addEventListener('click', function() {
-
+                    var tree = DiffRenderer.serializeHtml(sourceTextarea.value)
+                    var newTree = DiffRenderer.serializeHtml(newSourceTextarea.value)
                 })
             }())
         </script>
