@@ -27,10 +27,10 @@ Events handling, template engines or animations are NOT part of this project.
 ## Bench
 
 - htmlToJson - 200kb of html seralized in 15ms to json on my mb air.
-
+```
     npm i
     make bench
-
+```
 - jsperf of diff-renderer parser vs. all the dom parsers http://jsperf.com/domparser-vs-jsparser
 - memory bench: open ./test/memory.html , observe your engines memory, click lots of times on buttons and see what happens
 
