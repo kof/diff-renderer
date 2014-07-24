@@ -1,162 +1,170 @@
-<script src="../dist/diff-renderer.js"></script>
-<style>
-    .test {
-        border: 1px solid red;
-        width: 100px;
-        height: 100px;
-    }
+<html>
+    <head>
+        <title>DiffRenderer playground.</title>
+        <style>
+            body {
+                margin: 1rem;
+            }
+            .source, .new-source, .diff, .result {
+                float: left;
+                width: 24%;
+                margin-right: 1%;
+                height: 100%;
+            }
+            .source .output,
+            .new-source .output {
+                border: 2px solid green;
+            }
+            .source .templates {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+            .new-source .output {
+                margin-top: 0.9rem;
+            }
+            .diff .output {
+                margin-top: 3.5rem;
+                border: 2px solid red;
+            }
+            .result .output {
+                margin-top: 3.5rem;
+                border: 2px solid yellow;
+            }
+            .output {
+                width: 100%;
+                height: 100%;
+            }
+            .output .item,
+            .output .item2 {
+                background: green;
+                width: 100%;
+                height: 2rem;
+                border-bottom: 1px solid red;
+            }
+            .output .item2 {
+                background: orange;
+            }
 
-    .content {
-        border: 1px solid blue;
-        width: 100%;
-        height: 100%;
-    }
 
-    .item, .item2 {
-        background: green;
-        width: 100%;
-        height: 20px;
-        border-bottom: 1px solid red;
-    }
-    .item2 {
-        background: orange;
-    }
-</style>
+        </style>
+        <script src="../dist/diff-renderer.js"></script>
+    </head>
+    <body>
+        <div class="source">
+            <h2>Html</h2>
+            <select class="templates" name="template">
+                <option selected value="0">Change/remove/add attributes</option>
+                <option value="1">Insert an element at the end.</option>
+                <option value="2">Insert an element at the beginning.</option>
+                <option value="3">Insert an element in the middle.</option>
+                <option value="4">Remove element.</option>
+            </select>
+            <textarea class="output"></textarea>
+        </div>
+        <div class="new-source">
+            <h2>New html</h2>
+            <button class="render">Render diff</button>
+            <textarea class="output"></textarea>
+        </div>
+        <div class="diff">
+            <h2>JSON diff</h2>
+            <div class="output"></div>
+        </div>
+        <div class="result">
+            <h2>Rendered output</h2>
+            <div class="output"></div>
+        </div>
 
-<section>
-    Change/remove/add attributes
-    <div id="test1" class="test"></div>
-    <button onclick="render(1, 0)">Render 1</button>
-    <button onclick="render(1, 1)">Render 2</button>
-    <script id="tpl1-0" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-    <script id="tpl1-1" type="text">
-        <div class="content content1">
-            <div class="item"></div>
-            <div class="item" id="item-id"></div>
-            <div></div>
-        </div>
-    </script>
-</section>
-
-<section>
-    Change/remove/add text nodes
-    <div id="test2" class="test"></div>
-    <button onclick="render(2, 0)">Render 1</button>
-    <button onclick="render(2, 1)">Render 2</button>
-    <script id="tpl2-0" type="text">
-        <div class="content">
-            aaa
-            <div>aaa</div>
-            aaa
-            <div></div>
-        </div>
-    </script>
-    <script id="tpl2-1" type="text">
-        <div class="content">
-            bbb
-            <div>bbb</div>
-            <div>bbb</div>
-        </div>
-    </script>
-</section>
-
-<section>
-    Insert an element at the end.
-    <div id="test3" class="test"></div>
-    <button onclick="render(3, 0)">Render 1</button>
-    <button onclick="render(3, 1)">Render 2</button>
-    <script id="tpl3-0" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-    <script id="tpl3-1" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item"></div>
-            <div class="item2"></div>
-        </div>
-    </script>
-</section>
-
-<section>
-    Insert an element at the beginning.
-    <div id="test4" class="test"></div>
-    <button onclick="render(4, 0)">Render 1</button>
-    <button onclick="render(4, 1)">Render 2</button>
-    <script id="tpl4-0" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-    <script id="tpl4-1" type="text">
-        <div class="content">
-            <div class="item2"></div>
-            <div class="item"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-</section>
-
-<section>
-    Insert an element in the middle.
-    <div id="test5" class="test"></div>
-    <button onclick="render(5, 0)">Render 1</button>
-    <button onclick="render(5, 1)">Render 2</button>
-    <script id="tpl5-0" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-    <script id="tpl5-1" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item2"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-</section>
-
-<section>
-    Remove element
-    <div id="test6" class="test"></div>
-    <button onclick="render(6, 0)">Render 1</button>
-    <button onclick="render(6, 1)">Render 2</button>
-    <script id="tpl6-0" type="text">
-        <div class="content">
-            <div class="item item1"></div>
-            <div class="item item2"></div>
-            <div class="item item3"></div>
-        </div>
-    </script>
-    <script id="tpl6-1" type="text">
-        <div class="content">
-            <div class="item item1"></div>
-            <div class="item item3"></div>
-        </div>
-    </script>
-</section>
-
-<script>
-(function() {
-    function $(s) {
-        return document.querySelectorAll(s)
-    }
-
-    var cache  = {}
-
-    window.render = function(testNr, caseNr) {
-        var renderer = cache[testNr] = cache[testNr] || new DiffRenderer($('#test' + testNr)[0])
-        renderer.render($('#tpl' + testNr + '-' + caseNr)[0].innerHTML.trim())
-    }
-}())
+<script id="tpl0-current" type="text">
+<div class="item"></div>
+<div class="item"></div>
+<div class="item"></div>
 </script>
+<script id="tpl0-new" type="text">
+<div class="item"></div>
+<div class="item" id="item-id"></div>
+<div></div>
+</script>
+
+<script id="tpl1-current" type="text">
+aaa
+<div>aaa</div>
+aaa
+<div></div>
+</script>
+<script id="tpl1-new" type="text">
+bbb
+<div>bbb</div>
+<div>bbb</div>
+</script>
+
+<script id="tpl2-current" type="text">
+<div class="item"></div>
+<div class="item"></div>
+</script>
+<script id="tpl2-new" type="text">
+<div class="item"></div>
+<div class="item"></div>
+<div class="item2"></div>
+</script>
+
+<script id="tpl3-current" type="text">
+<div class="item"></div>
+<div class="item"></div>
+</script>
+<script id="tpl3-new" type="text">
+<div class="item2"></div>
+<div class="item"></div>
+<div class="item"></div>
+</script>
+
+<script id="tpl4-current" type="text">
+<div class="item"></div>
+<div class="item"></div>
+</script>
+<script id="tpl4-new" type="text">
+<div class="item"></div>
+<div class="item2"></div>
+<div class="item"></div>
+</script>
+
+<script id="tpl5-current" type="text">
+<div class="item item1"></div>
+<div class="item item2"></div>
+<div class="item item3"></div>
+</script>
+<script id="tpl5-new" type="text">
+<div class="item item1"></div>
+<div class="item item3"></div>
+</script>
+
+        <script>
+            (function() {
+                function $(s) {
+                    return document.querySelectorAll(s)
+                }
+
+                var sourceTextarea = $('.source .output')[0]
+                var newSourceTextarea = $('.new-source .output')[0]
+                var result = $('.result .output')[0]
+
+                function changeTemplate(index) {
+                    var currentHtml = $('#tpl' + index + '-current')[0].textContent.trim()
+                    sourceTextarea.value = currentHtml
+                    newSourceTextarea.innerHTML = $('#tpl' + index + '-new')[0].textContent.trim()
+                    result.innerHTML = currentHtml
+                }
+
+                var templatesSelect = $('.templates')[0]
+                changeTemplate(templatesSelect.value)
+                templatesSelect.addEventListener('change', function() {
+                    changeTemplate(templatesSelect.value)
+                })
+
+                $('.render')[0].addEventListener('click', function() {
+
+                })
+            }())
+        </script>
+    </body>
+</html>
