@@ -26,7 +26,7 @@ Events handling, template engines or animations are NOT part of this project.
 
 ## Playground
 
-Visit [playground](demo/playground.html) to see it in action.
+Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see it in action.
 
 ## Bench
 
