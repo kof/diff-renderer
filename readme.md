@@ -1,34 +1,35 @@
-## Html diff based dom renderer.
+## Why
 
-Goal - `div.innerHTML` which renders just the difference. Hopefully somewhere in the future, browsers will do this for us, but for now ...
+DOM is slow. It has always been slow. There is no hope this will change in the near future.
 
-- no data-bindings required
-- no events library included - use whatever you want
-- no templating engine included - use whatever you want
-- no virtual dom, just a snapshot as a plain javascript object for diffing
+We want to display the changes of our state or data without thinking about "how to render".
+jQuery has fixed inconsistencies for popular DOM methods. This made our live easier for years. In the meantime requirements on web applications grew up. Complex application logic and push notifications led us to the need of bidirectional bindings between UI and data.
 
-Currently experimental stage. Not ready for use in any environment.
+Projects like [react](https://github.com/facebook/react/) were born.
 
-## How does it works
+React is great. It solves lots of our problems, but the price is high. It comes at a price of "no compatibility" to all the things we have build in the last decade.
 
-1. Serialize DOM elements of given container for later diffing ONCE.
-1. On .render call, serialize html to the same format.
-1. Find the differences.
-1. Apply differences to the DOM.
+## Goal
 
-## Todo
+diff-renderer is here to solve 1 issue - effective rendering of data changes to the DOM.
 
-- add more tests for html serializer, port tests from some well tested parsers
-- create better diff
-- write diff renderer
+Events handling, template engines or animations are NOT part of this project.
 
+## How
+
+1. By accepting the DOM as a render api, not something we can change all the time.
+1. Accepts a snapshot of your state represented as html or json. You can use any template engine or none.
+1. Calculates the difference to the state in the dom.
+1. Intelligently renders the difference by only modifying/adding/removing nodes we have to.
+1. Maintains a pool of DOM nodes and reuses them.
+1. Benchmark driven development
 
 ## Bench
 
 - htmlToJson - 200kb of html seralized in 15ms to json on my mb air.
 
-        npm i
-        make bench
+    npm i
+    make bench
 - jsperf of diff-renderer parser vs. all the dom parsers http://jsperf.com/domparser-vs-jsparser
 - memory bench: open ./test/memory.html , observe your engines memory, click lots of times on buttons and see what happens
 
