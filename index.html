@@ -1,163 +1,106 @@
-<title>Playground</title>
-<script src="dist/diff-renderer.js"></script>
-<style>
-    .test {
-        border: 1px solid red;
-        width: 100px;
-        height: 100px;
-    }
+<!DOCTYPE html>
+<html>
 
-    .content {
-        border: 1px solid blue;
-        width: 100%;
-        height: 100%;
-    }
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Diff-renderer : Render diff to the dom." />
 
-    .item, .item2 {
-        background: green;
-        width: 100%;
-        height: 20px;
-        border-bottom: 1px solid red;
-    }
-    .item2 {
-        background: orange;
-    }
-</style>
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-<section>
-    Change/remove/add attributes
-    <div id="test1" class="test"></div>
-    <button onclick="render(1, 0)">Render 1</button>
-    <button onclick="render(1, 1)">Render 2</button>
-    <script id="tpl1-0" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-    <script id="tpl1-1" type="text">
-        <div class="content content1">
-            <div class="item"></div>
-            <div class="item" id="item-id"></div>
-            <div></div>
-        </div>
-    </script>
-</section>
+    <title>Diff-renderer</title>
+  </head>
 
-<section>
-    Change/remove/add text nodes
-    <div id="test2" class="test"></div>
-    <button onclick="render(2, 0)">Render 1</button>
-    <button onclick="render(2, 1)">Render 2</button>
-    <script id="tpl2-0" type="text">
-        <div class="content">
-            aaa
-            <div>aaa</div>
-            aaa
-            <div></div>
-        </div>
-    </script>
-    <script id="tpl2-1" type="text">
-        <div class="content">
-            bbb
-            <div>bbb</div>
-            <div>bbb</div>
-        </div>
-    </script>
-</section>
+  <body>
 
-<section>
-    Insert an element at the end.
-    <div id="test3" class="test"></div>
-    <button onclick="render(3, 0)">Render 1</button>
-    <button onclick="render(3, 1)">Render 2</button>
-    <script id="tpl3-0" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-    <script id="tpl3-1" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item"></div>
-            <div class="item2"></div>
-        </div>
-    </script>
-</section>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/kof/diff-renderer">View on GitHub</a>
 
-<section>
-    Insert an element at the beginning.
-    <div id="test4" class="test"></div>
-    <button onclick="render(4, 0)">Render 1</button>
-    <button onclick="render(4, 1)">Render 2</button>
-    <script id="tpl4-0" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-    <script id="tpl4-1" type="text">
-        <div class="content">
-            <div class="item2"></div>
-            <div class="item"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-</section>
+          <h1 id="project_title">Diff-renderer</h1>
+          <h2 id="project_tagline">Render diff to the dom.</h2>
 
-<section>
-    Insert an element in the middle.
-    <div id="test5" class="test"></div>
-    <button onclick="render(5, 0)">Render 1</button>
-    <button onclick="render(5, 1)">Render 2</button>
-    <script id="tpl5-0" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-    <script id="tpl5-1" type="text">
-        <div class="content">
-            <div class="item"></div>
-            <div class="item2"></div>
-            <div class="item"></div>
-        </div>
-    </script>
-</section>
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/kof/diff-renderer/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/kof/diff-renderer/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
 
-<section>
-    Remove element
-    <div id="test6" class="test"></div>
-    <button onclick="render(6, 0)">Render 1</button>
-    <button onclick="render(6, 1)">Render 2</button>
-    <script id="tpl6-0" type="text">
-        <div class="content">
-            <div class="item item1"></div>
-            <div class="item item2"></div>
-            <div class="item item3"></div>
-        </div>
-    </script>
-    <script id="tpl6-1" type="text">
-        <div class="content">
-            <div class="item item1"></div>
-            <div class="item item3"></div>
-        </div>
-    </script>
-</section>
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>
+<a name="why" class="anchor" href="#why"><span class="octicon octicon-link"></span></a>Why</h2>
 
-<script>
-(function() {
-    function $(s) {
-        return document.querySelectorAll(s)
-    }
+<p>DOM is slow. It has always been slow. There is no hope this will change in the near future.</p>
 
-    var cache  = {}
+<p>We want to display the changes of our state or data without thinking about "how to render".
+jQuery has fixed inconsistencies for popular DOM methods. This made our live easier for years. In the meantime requirements on web applications grew up. Complex application logic and push notifications led us to the need of bidirectional bindings between UI and data.</p>
 
-    window.render = function(testNr, caseNr) {
-        var renderer = cache[testNr] = cache[testNr] || new DiffRenderer($('#test' + testNr)[0])
-        renderer.render($('#tpl' + testNr + '-' + caseNr)[0].innerHTML.trim())
-    }
-}())
-</script>
+<p>Projects like <a href="https://github.com/facebook/react/">react</a> were born.</p>
+
+<p>React is great. It solves lots of our problems, but the price is high. It comes at a price of "no compatibility" to all the things we have build in the last decade.</p>
+
+<h2>
+<a name="goal" class="anchor" href="#goal"><span class="octicon octicon-link"></span></a>Goal</h2>
+
+<p>diff-renderer is here to solve 1 issue - rendering of data changes to the DOM at 60fps.</p>
+
+<p>Events handling, template engines or animations are NOT part of this project.</p>
+
+<h2>
+<a name="how" class="anchor" href="#how"><span class="octicon octicon-link"></span></a>How</h2>
+
+<ol>
+<li>By accepting the DOM as a render api, not something we can change all the time.</li>
+<li>Accepts a snapshot of your state represented as html or json. You can use any template engine or none.</li>
+<li>Calculates the difference to the state in the dom.</li>
+<li>Intelligently renders the difference by only modifying/adding/removing nodes we have to.</li>
+<li>Maintains a pool of DOM nodes and reuses them.</li>
+<li>Benchmark driven development</li>
+</ol><h2>
+<a name="bench" class="anchor" href="#bench"><span class="octicon octicon-link"></span></a>Bench</h2>
+
+<ul>
+<li>html parser - 200kb of html parsed in 15ms to json on my mb air.</li>
+</ul><pre><code>    npm i
+    make bench
+</code></pre>
+
+<ul>
+<li>jsperf of html parser vs. all the dom parsers <a href="http://jsperf.com/domparser-vs-jsparser">http://jsperf.com/domparser-vs-jsparser</a>
+</li>
+<li>html parser manual memory bench: open ./test/memory.html , observe your engines memory, click lots of times on buttons and see what happens</li>
+</ul><h2>
+<a name="test" class="anchor" href="#test"><span class="octicon octicon-link"></span></a>Test</h2>
+
+<pre><code>npm i
+make test
+</code></pre>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Diff-renderer maintained by <a href="https://github.com/kof">kof</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-53173817-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
