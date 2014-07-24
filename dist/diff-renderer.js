@@ -2,6 +2,7 @@
 module.exports = _dereq_('./lib/renderer')
 
 },{"./lib/renderer":3}],2:[function(_dereq_,module,exports){
+'use strict'
 
 /**
  * Find value in json obj using dots path notation.
@@ -33,13 +34,15 @@ module.exports = function(obj, path) {
 }
 
 },{}],3:[function(_dereq_,module,exports){
-var serializeDom = _dereq_('./serialize-dom'),
-    serializeHtml = _dereq_('./serialize-html'),
-    keypath = _dereq_('./keypath'),
-    docdiff = _dereq_('docdiff')
+'use strict'
 
-var createTextNode = document.createTextNode.bind(document),
-    createElement = document.createElement.bind(document)
+var docdiff = _dereq_('docdiff')
+var keypath = _dereq_('./keypath')
+var serializeDom = _dereq_('./serialize-dom')
+var serializeHtml = _dereq_('./serialize-html')
+
+var createTextNode = document.createTextNode.bind(document)
+var createElement = document.createElement.bind(document)
 
 /**
  * Renderer constructor.
@@ -115,12 +118,12 @@ Renderer.prototype.render = function(html) {
 }
 
 Renderer.prototype._apply = function(change) {
-    var prop = change.path[change.path.length - 1],
-        propIsNum = !isNaN(prop),
-        pos,
-        itemPath, item, newNode,
-        key,
-        now = change.values.now
+    var prop = change.path[change.path.length - 1]
+    var propIsNum = !isNaN(prop)
+    var pos
+    var itemPath, item, newNode
+    var key
+    var now = change.values.now
 
     if (Renderer.IGNORE_PROPERTIES[prop]) return
 
@@ -192,11 +195,9 @@ Renderer.prototype._apply = function(change) {
  * @return {Element}
  */
 Renderer.prototype._createNode = function(name, text, attrs) {
-    var el, attr
+    var el = name == '#text' ? createTextNode(text) : createElement(name)
 
-    el = name == '#text' ? createTextNode(text) : createElement(name)
-
-    for (attr in attrs) el.setAttribute(attr, attrs[attr])
+    for (var attr in attrs) el.setAttribute(attr, attrs[attr])
 
     return el
 }
@@ -210,6 +211,8 @@ Renderer.prototype._removeNode = function(node) {
 }
 
 },{"./keypath":2,"./serialize-dom":4,"./serialize-html":5,"docdiff":7}],4:[function(_dereq_,module,exports){
+'use strict'
+
 /**
  * Walk through the dom and create the same tree like html serializer.
  *
@@ -218,10 +221,12 @@ Renderer.prototype._removeNode = function(node) {
  * @api private
  */
 module.exports = function serialize(el) {
-    var node = {name: el.nodeName.toLowerCase(), node: el},
-        attr = el.attributes, attrLength,
-        childNodes = el.childNodes, childNodesLength,
-        i
+    var node = {name: el.nodeName.toLowerCase(), node: el}
+    var attr = el.attributes
+    var attrLength
+    var childNodes = el.childNodes
+    var childNodesLength
+    var i
 
     if (node.name == '#text') {
         node.text = el.textContent
@@ -248,6 +253,8 @@ module.exports = function serialize(el) {
 }
 
 },{}],5:[function(_dereq_,module,exports){
+'use strict'
+
 /**
  * Parse html and create a json tree.
  *
@@ -257,23 +264,23 @@ module.exports = function serialize(el) {
  * @api private
  */
 module.exports = function serialize(str, parent) {
-    var i = 0,
-        end = false,
-        added = false,
-        current,
-        isWhite, isSlash, isOpen, isClose,
-        inTag = false,
-        inTagName = false,
-        inAttrName = false,
-        inAttrValue = false,
-        inCloser = false,
-        inClosing = false,
-        isQuote, openQuote,
-        attrName, attrValue,
-        inText = false,
-        tag = {parent: parent}
+    var i = 0
+    var end = false
+    var added = false
+    var current
+    var isWhite, isSlash, isOpen, isClose
+    var inTag = false
+    var inTagName = false
+    var inAttrName = false
+    var inAttrValue = false
+    var inCloser = false
+    var inClosing = false
+    var isQuote, openQuote
+    var attrName, attrValue
+    var inText = false
+    if (!parent) parent = {name: 'root'}
+    var tag = {parent: parent}
 
-    parent || (parent = {})
 
     if (str) {
         tag.name = ''
