@@ -24,6 +24,10 @@ Events handling, template engines or animations are NOT part of this project.
 1. Maintains a pool of DOM nodes and reuses them.
 1. Benchmark driven development
 
+## Playground
+
+Visit [playground](demo/playground.html) to see it in action.
+
 ## Bench
 
 - html parser - 200kb of html parsed in 15ms to json on my mb air.
