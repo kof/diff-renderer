@@ -11,7 +11,7 @@ React is great. It solves lots of our problems, but the price is high. It comes 
 
 ## Goal
 
-diff-renderer is here to solve 1 issue - effective rendering of data changes to the DOM.
+diff-renderer is here to solve 1 issue - rendering of data changes to the DOM at 60fps.
 
 Events handling, template engines or animations are NOT part of this project.
 
