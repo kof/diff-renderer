@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Diff-renderer by kof</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Diff-renderer</h1>
+        <p>Render diff to the dom.</p>
+
+        <p class="view"><a href="https://github.com/kof/diff-renderer">View the Project on GitHub <small>kof/diff-renderer</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/kof/diff-renderer/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/kof/diff-renderer/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/kof/diff-renderer">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h2>
+<a name="why" class="anchor" href="#why"><span class="octicon octicon-link"></span></a>Why</h2>
+
+<p>DOM is slow. It has always been slow. There is no hope this will change in the near future.</p>
+
+<p>We want to display the changes of our state or data without thinking about "how to render".
+jQuery has fixed inconsistencies for popular DOM methods. This made our live easier for years. In the meantime requirements on web applications grew up. Complex application logic and push notifications led us to the need of bidirectional bindings between UI and data.</p>
+
+<p>Projects like <a href="https://github.com/facebook/react/">react</a> were born.</p>
+
+<p>React is great. It solves lots of our problems, but the price is high. It comes at a price of "no compatibility" to all the things we have build in the last decade.</p>
+
+<h2>
+<a name="goal" class="anchor" href="#goal"><span class="octicon octicon-link"></span></a>Goal</h2>
+
+<p>diff-renderer is here to solve 1 issue - rendering of data changes to the DOM at 60fps.</p>
+
+<p>Events handling, template engines or animations are NOT part of this project.</p>
+
+<h2>
+<a name="how" class="anchor" href="#how"><span class="octicon octicon-link"></span></a>How</h2>
+
+<ol>
+<li>By accepting the DOM as a render api, not something we can change all the time.</li>
+<li>Accepts a snapshot of your state represented as html or json. You can use any template engine or none.</li>
+<li>Calculates the difference to the state in the dom.</li>
+<li>Intelligently renders the difference by only modifying/adding/removing nodes we have to.</li>
+<li>Maintains a pool of DOM nodes and reuses them.</li>
+<li>Benchmark driven development</li>
+</ol><h2>
+<a name="bench" class="anchor" href="#bench"><span class="octicon octicon-link"></span></a>Bench</h2>
+
+<ul>
+<li>html parser - 200kb of html parsed in 15ms to json on my mb air.</li>
+</ul><pre><code>    npm i
+    make bench
+</code></pre>
+
+<ul>
+<li>jsperf of html parser vs. all the dom parsers <a href="http://jsperf.com/domparser-vs-jsparser">http://jsperf.com/domparser-vs-jsparser</a>
+</li>
+<li>html parser manual memory bench: open ./test/memory.html , observe your engines memory, click lots of times on buttons and see what happens</li>
+</ul><h2>
+<a name="test" class="anchor" href="#test"><span class="octicon octicon-link"></span></a>Test</h2>
+
+<pre><code>npm i
+make test
+</code></pre>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/kof">kof</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-262517-4");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
