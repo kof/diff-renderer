@@ -238,6 +238,21 @@ test('collection 0', function() {
 })
 
 test('collection 1', function() {
+    var nodes = serializeHtml('<a></a><b></b><c></c>').children
+    hashify(nodes)
+    equal(nodes[0].name, 'a', 'node 0 name')
+    equal(nodes[0].hash, 6422626, 'node 0 hash')
+    equal(nodes[0].parent.name, 'root' , 'node 0 parent')
+    equal(nodes[1].name, 'b', 'node 1 name')
+    equal(nodes[1].hash, 6488163, 'node 1 hash')
+    equal(nodes[1].parent.name, 'root' , 'node 1 parent')
+    equal(nodes[2].name, 'c', 'node 2 name')
+    equal(nodes[2].hash, 6553700, 'node 2 hash')
+    equal(nodes[2].parent.name, 'root' , 'node 2 parent')
+    equal(nodes.length, 3, 'nodes length')
+})
+
+test('collection 2', function() {
     var node = serializeHtml('<a><b/><c/></a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
@@ -249,7 +264,7 @@ test('collection 1', function() {
     equal(node.children.length, 2, 'children length')
 })
 
-test('collection 2', function() {
+test('collection 3', function() {
     var node = serializeHtml('<a><b></b><c/></a>').children[0]
     hashify(node)
     equal(node.name, 'a', 'node name')
@@ -261,16 +276,4 @@ test('collection 2', function() {
     equal(node.children.length, 2, 'children length')
 })
 
-return
-test('collection 3', function() {
-    var nodes = serializeHtml('<a></a><b></b><c></c>').children
-    console.log(nodes)
-    hashify(nodes)
-    equal(nodes[0].name, 'a', 'node 0 name')
-    equal(nodes[0].hash, 6422626, 'node 0 hash')
-    equal(nodes[1].name, 'b', 'node 1 name')
-    equal(nodes[1].hash, 6488163, 'node 1 hash')
-    equal(nodes[2].name, 'c', 'node 2 name')
-    equal(nodes[2].hash, 6553700, 'node 2 hash')
-    equal(nodes.length, 3, 'nodes length')
-})
+
