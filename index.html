@@ -1,0 +1,163 @@
+<title>Playground</title>
+<script src="dist/diff-renderer.js"></script>
+<style>
+    .test {
+        border: 1px solid red;
+        width: 100px;
+        height: 100px;
+    }
+
+    .content {
+        border: 1px solid blue;
+        width: 100%;
+        height: 100%;
+    }
+
+    .item, .item2 {
+        background: green;
+        width: 100%;
+        height: 20px;
+        border-bottom: 1px solid red;
+    }
+    .item2 {
+        background: orange;
+    }
+</style>
+
+<section>
+    Change/remove/add attributes
+    <div id="test1" class="test"></div>
+    <button onclick="render(1, 0)">Render 1</button>
+    <button onclick="render(1, 1)">Render 2</button>
+    <script id="tpl1-0" type="text">
+        <div class="content">
+            <div class="item"></div>
+            <div class="item"></div>
+            <div class="item"></div>
+        </div>
+    </script>
+    <script id="tpl1-1" type="text">
+        <div class="content content1">
+            <div class="item"></div>
+            <div class="item" id="item-id"></div>
+            <div></div>
+        </div>
+    </script>
+</section>
+
+<section>
+    Change/remove/add text nodes
+    <div id="test2" class="test"></div>
+    <button onclick="render(2, 0)">Render 1</button>
+    <button onclick="render(2, 1)">Render 2</button>
+    <script id="tpl2-0" type="text">
+        <div class="content">
+            aaa
+            <div>aaa</div>
+            aaa
+            <div></div>
+        </div>
+    </script>
+    <script id="tpl2-1" type="text">
+        <div class="content">
+            bbb
+            <div>bbb</div>
+            <div>bbb</div>
+        </div>
+    </script>
+</section>
+
+<section>
+    Insert an element at the end.
+    <div id="test3" class="test"></div>
+    <button onclick="render(3, 0)">Render 1</button>
+    <button onclick="render(3, 1)">Render 2</button>
+    <script id="tpl3-0" type="text">
+        <div class="content">
+            <div class="item"></div>
+            <div class="item"></div>
+        </div>
+    </script>
+    <script id="tpl3-1" type="text">
+        <div class="content">
+            <div class="item"></div>
+            <div class="item"></div>
+            <div class="item2"></div>
+        </div>
+    </script>
+</section>
+
+<section>
+    Insert an element at the beginning.
+    <div id="test4" class="test"></div>
+    <button onclick="render(4, 0)">Render 1</button>
+    <button onclick="render(4, 1)">Render 2</button>
+    <script id="tpl4-0" type="text">
+        <div class="content">
+            <div class="item"></div>
+            <div class="item"></div>
+        </div>
+    </script>
+    <script id="tpl4-1" type="text">
+        <div class="content">
+            <div class="item2"></div>
+            <div class="item"></div>
+            <div class="item"></div>
+        </div>
+    </script>
+</section>
+
+<section>
+    Insert an element in the middle.
+    <div id="test5" class="test"></div>
+    <button onclick="render(5, 0)">Render 1</button>
+    <button onclick="render(5, 1)">Render 2</button>
+    <script id="tpl5-0" type="text">
+        <div class="content">
+            <div class="item"></div>
+            <div class="item"></div>
+        </div>
+    </script>
+    <script id="tpl5-1" type="text">
+        <div class="content">
+            <div class="item"></div>
+            <div class="item2"></div>
+            <div class="item"></div>
+        </div>
+    </script>
+</section>
+
+<section>
+    Remove element
+    <div id="test6" class="test"></div>
+    <button onclick="render(6, 0)">Render 1</button>
+    <button onclick="render(6, 1)">Render 2</button>
+    <script id="tpl6-0" type="text">
+        <div class="content">
+            <div class="item item1"></div>
+            <div class="item item2"></div>
+            <div class="item item3"></div>
+        </div>
+    </script>
+    <script id="tpl6-1" type="text">
+        <div class="content">
+            <div class="item item1"></div>
+            <div class="item item3"></div>
+        </div>
+    </script>
+</section>
+
+<script>
+(function() {
+    function $(s) {
+        return document.querySelectorAll(s)
+    }
+
+    var cache  = {}
+
+    window.render = function(testNr, caseNr) {
+        var renderer = cache[testNr] = cache[testNr] || new DiffRenderer($('#test' + testNr)[0])
+        renderer.render($('#tpl' + testNr + '-' + caseNr)[0].innerHTML.trim())
+    }
+}())
+</script>
