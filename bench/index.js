@@ -1,5 +1,5 @@
 var html = require('fs').readFileSync(__dirname + '/test.html', 'utf8'),
-    htmlToJson = require('../lib/htmlToJson'),
+    serializeHtml = require('../lib/serialize-html'),
     htmlParser = require('html-minifier/src/htmlparser'),
     htmltree = require('htmltree')
 
@@ -8,7 +8,7 @@ var noop = function() {}
 exports.compare = {}
 
 exports.compare.diffRenderer = function() {
-    htmlToJson(html)
+    serializeHtml(html)
 }
 
 exports.compare.htmlParser = function() {
