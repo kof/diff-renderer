@@ -1,0 +1,25 @@
+<script src="../dist/diff-renderer.js"></script>
+
+<button onclick="domParser(10000)">Parse with DOMParser 10000</button>
+<button onclick="rendererParser(10000)">Parse with diff-renderer 10000</button>
+<script>
+    function domParser(nr) {
+        var parser = new DOMParser();
+        console.time('domParser')
+        while (nr) {
+            parser.parseFromString('<div>', 'application/xml')
+            nr--
+        }
+        console.timeEnd('domParser')
+    }
+
+    function rendererParser(nr) {
+        console.time('rendererParser')
+        while (nr) {
+            DiffRenderer.serializeHtml('<div>')
+
+            nr--
+        }
+        console.timeEnd('rendererParser')
+    }
+</script>

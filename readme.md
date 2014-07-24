@@ -29,6 +29,8 @@ Currently experimental stage. Not ready for use in any environment.
 
         npm i
         make bench
+- jsperf of diff-renderer parser vs. all the dom parsers http://jsperf.com/domparser-vs-jsparser
+- memory bench: open ./test/memory.html , observe your engines memory, click lots of times on buttons and see what happens
 
 ## Test
 
