@@ -20,10 +20,16 @@ module.exports = function serialize(str, parent) {
     var inAttrValue = false
     var inCloser = false
     var inClosing = false
+<<<<<<< HEAD
+    var isQuote, openQuote,
+    var attrName, attrValue
+    var inText = false
+=======
     var isQuote, openQuote
     var attrName, attrValue
     var inText = false
     if (!parent) parent = {name: 'root'}
+>>>>>>> master
     var tag = {parent: parent}
 
 

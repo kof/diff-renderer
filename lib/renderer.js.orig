@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+var docdiff = require('docdiff')
+var keypath = require('./keypath')
+var serializeDom = require('./serialize-dom')
+var serializeHtml = require('./serialize-html')
+
+=======
 'use strict'
 
 var docdiff = require('docdiff')
@@ -5,6 +12,7 @@ var keypath = require('./keypath')
 var serializeDom = require('./serialize-dom')
 var serializeHtml = require('./serialize-html')
 
+>>>>>>> master
 var createTextNode = document.createTextNode.bind(document)
 var createElement = document.createElement.bind(document)
 

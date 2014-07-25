@@ -9,7 +9,11 @@
  */
 module.exports = function serialize(el) {
     var node = {name: el.nodeName.toLowerCase(), node: el}
+<<<<<<< HEAD
+    var attr = el.attributes,
+=======
     var attr = el.attributes
+>>>>>>> master
     var attrLength
     var childNodes = el.childNodes
     var childNodesLength
