@@ -95,29 +95,49 @@ Renderer.prototype.serialize = function() {
  * @api public
  */
 Renderer.prototype.render = function(html) {
-    var newTree, changes
-
     // this.el is empty, nothing to diff.
+    // TODO use nodes pool
     if (!this.tree) {
         this.el.innerHTML = html
         this.serialize()
         return this
     }
 
-    newTree = serializeHtml(html).children
-    changes = docdiff(this.tree, newTree)
-
-    console.log('current', this.tree)
-    console.log('new', newTree)
-
-    this._newTree =  newTree
-    changes.forEach(this._apply, this)
+    var newTree = serializeHtml(html).children
+    this.decycle(newTree)
+    var changes = docdiff(this.tree, newTree)
+    for (var i = 0; i < changes.length; i++) {
+        this.apply(changes[i], newTree)
+    }
     this.tree = newTree
 
     return this
 }
 
-Renderer.prototype._apply = function(change) {
+/**
+ * Remove circular dependencies from the node or nodes list.
+ *
+ * @param {Object} obj
+ * @api private
+ */
+Renderer.prototype.decycle = function(obj) {
+    if (obj.length) {
+        for (var key in obj) this.decycle(obj[key])
+    } else {
+        delete obj.parent
+        delete obj.node
+        if (obj.children) this.decycle(obj.children)
+    }
+}
+
+/**
+ * Apply change to the dom.
+ *
+ * @param {Object} change
+ * @param {Object} newTree
+ * @api private
+ */
+Renderer.prototype.apply = function(change, newTree) {
     var prop = change.path[change.path.length - 1]
     var propIsNum = !isNaN(prop)
     var pos
@@ -144,13 +164,13 @@ Renderer.prototype._apply = function(change) {
                 // In case current change is based on previous change, previous
                 // of the same iteration, previous change is not applied to the
                 // current tree yet.
-                if (!item) item = keypath(this._newTree, itemPath)
+                if (!item) item = keypath(newTree, itemPath)
 
-                newNode = this._createNode(now.name, now.text, now.attributes)
-                this._insertAfter(item.node, newNode)
+                newNode = this.createNode(now.name, now.text, now.attributes)
+                this.insertAfter(item.node, newNode)
 
                 // Link the node in the new tree.
-                keypath(this._newTree, change.path).node = newNode
+                keypath(newTree, change.path).node = newNode
             // Append children.
             } else {
                 itemPath = change.path.slice(0, change.path.length - 1)
@@ -158,7 +178,7 @@ Renderer.prototype._apply = function(change) {
                 for (key in now) {
                     if (key != 'length') {
                         item.node.appendChild(
-                            this._createNode(
+                            this.createNode(
                                 now[key].name,
                                 now[key].text,
                                 now[key].attributes
@@ -168,7 +188,7 @@ Renderer.prototype._apply = function(change) {
                 }
             }
         } else if (change.change == 'remove') {
-            this._removeNode(change.values.original.node)
+            this.removeNode(change.values.original.node)
         }
     // Change/add attributes
     } else {
@@ -193,8 +213,9 @@ Renderer.prototype._apply = function(change) {
  * @param {String} [text] text for text node
  * @param {Object} [attrs] node attributes
  * @return {Element}
+ * @api private
  */
-Renderer.prototype._createNode = function(name, text, attrs) {
+Renderer.prototype.createNode = function(name, text, attrs) {
     var el = name == '#text' ? createTextNode(text) : createElement(name)
 
     for (var attr in attrs) el.setAttribute(attr, attrs[attr])
@@ -202,11 +223,24 @@ Renderer.prototype._createNode = function(name, text, attrs) {
     return el
 }
 
-Renderer.prototype._insertAfter = function(prev, next) {
-    prev.parentNode.insertBefore(next, prev.nextSibling)
+/**
+ * Insert a dom node after a node.
+ *
+ * @param {Node} prev
+ * @param {Node} node
+ * @api private
+ */
+Renderer.prototype.insertAfter = function(prev, node) {
+    prev.parentNode.insertBefore(node, prev.nextSibling)
 }
 
-Renderer.prototype._removeNode = function(node) {
+/**
+ * Remove a dom node
+ *
+ * @param {Node} node
+ * @api private
+ */
+Renderer.prototype.removeNode = function(node) {
     node.parentNode.removeChild(node)
 }
 
@@ -329,7 +363,7 @@ module.exports = function serialize(str, parent) {
 
                         inAttrName = false
                         if (attrName) {
-                            tag.attributes || (tag.attributes = {})
+                            if (!tag.attributes) tag.attributes = {}
                             tag.attributes[attrName] = ''
                         }
                     } else if (isClose) {
@@ -370,13 +404,13 @@ module.exports = function serialize(str, parent) {
             } else {
                 inText = true
                 inTag = false
-                tag.name || (tag.name = '#text')
+                if (!tag.name) tag.name = '#text'
                 if (tag.text == null) tag.text = ''
                 tag.text += current
             }
 
             if (tag.name && !added) {
-                parent.children || (parent.children = {length: 0})
+                if (!parent.children) parent.children = {length: 0}
                 parent.children[parent.children.length] = tag
                 parent.children.length++
                 added = true

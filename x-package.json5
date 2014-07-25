@@ -29,7 +29,6 @@
                 docdiff: '0.0.1'
             }
         },
-        jquery: true,
         bower: true,
         component: true
     }

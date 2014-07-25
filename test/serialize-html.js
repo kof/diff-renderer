@@ -1,6 +1,8 @@
 test('text node 0', function() {
-    var node = serializeHtml('a').children[0]
+    var doc = serializeHtml('a')
+    var node = doc.children[0]
     hashify(node)
+    equal(doc.name, 'root', 'root name')
     equal(node.name, '#text', 'node name')
     equal(node.text, 'a', 'node text')
     equal(node.hash, 123798090, 'node hash')
