@@ -22,12 +22,13 @@ Feel free to use any other project for events handling, templates, animations et
 1. Intelligently renders the difference by only modifying/adding/removing nodes it has to.
 1. Maintains a pool of DOM nodes and reuses them.
 
-## Usecases
+## Use cases
 
-1. Replacement for jQuery's dom manipulation methods.
-2. Easy RESTful http API implementation:
-
-Client sends a document to the server, server validates it, client gets cleaned document back. With DiffRenderer we can apply the new one to the DOM without any further checks.
+1. Replacement for jQuery's dom manipulation methods and any manual dom manipulation.
+1. Easy RESTful http API implementation:
+   Client sends an object to the server, server validates it, client gets cleaned object back. With DiffRenderer we can apply the new one to the DOM without any checks.
+1. Full bidirectional binding. For this you need to add the part for handling events and changing the state/data objects manually.
+1. Real time data manipulation / rendering.
 
 ## Playground
 
