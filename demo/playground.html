@@ -171,6 +171,7 @@ bbb
 
                     var oldTree = DiffRenderer.serializeHtml(sourceTextareaEl.value)
                     renderer.decycle(oldTree)
+                    renderer.decycle(renderer.tree)
                     var diff = DiffRenderer.docdiff(oldTree.children, renderer.tree)
                     diffEl.innerHTML = JSON.stringify(diff, null, '  ')
                 })
