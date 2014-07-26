@@ -39,7 +39,7 @@ React is great. It solves lots of our problems, but the price is high. It comes 
 ## Gotchas
 
 1. Don't attach listeners to the elements within renderer container. Do event delegation.
-1. Don't change elements directly, use DiffRenderer. If you changed an element directly - refresh DiffRenderer.
+1. Don't change elements directly, use DiffRenderer. If you (or some lib) changed an element directly - refresh DiffRenderer.
 
 ## Playground
 
