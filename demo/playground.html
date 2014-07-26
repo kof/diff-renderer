@@ -76,7 +76,9 @@
                 var resultEl = $('.result .output')[0]
                 var renderer = new DiffRenderer(resultEl)
 
-                function render() {
+                DiffRenderer.start()
+
+                function update() {
                     /*
                     var oldTree = DiffRenderer.serializeHtml(sourceTextareaEl.value).children
                     var newTree = DiffRenderer.serializeHtml(sourceEl.value).children
@@ -85,13 +87,13 @@
                     var diff = DiffRenderer.docdiff(oldTree, newTree)
                     diffEl.innerHTML = JSON.stringify(diff, null, '  ')
 */
-                    renderer.render(sourceEl.value)
+                    renderer.update(sourceEl.value)
                 }
 
                 sourceEl.value = $('#initial')[0].innerHTML.trim()
-                render()
+                update()
 
-                $('.render')[0].addEventListener('click', render)
+                $('.render')[0].addEventListener('click', update)
             }())
         </script>
     </body>

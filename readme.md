@@ -55,6 +55,10 @@ Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see i
 - jsperf of html parser vs. dom parsers http://jsperf.com/domparser-vs-jsparser
 - manual html parser memory test: open ./test/memory.html, observe your engines memory, click some times on buttons and see what happens
 
+## Api
+
+- Use [requestAnimationFrame shim](https://github.com/kof/animation-frame) for older browsers.
+
 ## Test
 
     npm i

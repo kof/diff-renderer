@@ -1,8 +1,15 @@
 {
   "name": "diff-renderer",
   "version": "0.1.1",
-  "description": "",
-  "keywords": [],
+  "description": "Render diff to the dom.",
+  "keywords": [
+    "diff",
+    "renderer",
+    "dom",
+    "virtual dom",
+    "react",
+    "binding"
+  ],
   "author": {
     "name": "Oleg Slobodskoi",
     "email": "oleg008@gmail.com"

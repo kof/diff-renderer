@@ -190,8 +190,11 @@ Modifier.prototype.children = function(change, prop) {
         node = keypath(this.node.children, path)
         // Remove all children.
         if (prop == 'children') {
-            for (var i = 0; i < node.length; i++) {
-                node[i].remove()
+            // In case of migration to text, children are not migrated.
+            if (node) {
+                for (var i = 0; i < node.length; i++) {
+                    node[i].remove()
+                }
             }
         } else {
             node.remove()
@@ -217,7 +220,7 @@ Modifier.prototype.attributes = function(change, prop) {
         var path = change.path.slice(0, change.path.length - 1)
         var node = keypath(this.node.children, path)
         for (prop in change.values.original) {
-            node.setAttribute(prop, null)
+            node.removeAttribute(prop)
         }
     }
 }
@@ -233,7 +236,17 @@ Modifier.prototype.name = function(change, prop) {
     var path = change.path.slice(0, change.path.length - 1)
     var node = keypath(this.node.children, path)
     var now = change.values.now
-    node.setName(now)
+
+    // Tag name changed to text
+    if (now == '#text') {
+        var position = path[path.length - 1]
+        var parent = node.parent
+        node.remove()
+        node = new Node({name: now}, parent)
+        parent.insertAt(position, node)
+    } else {
+        node.setName(now)
+    }
 }
 
 },{"./keypath":3,"./node":5}],5:[function(_dereq_,module,exports){
@@ -313,14 +326,12 @@ Node.prototype.toJson = function() {
  * @api private
  */
 Node.prototype.render = function() {
-    if (!this.dirty) return this
+    if (!this.dirty) return
 
     if (this.dirty.name) {
         if (this.target) this.migrate()
         else this.target = pool.allocate(this.name)
     }
-
-    if (!this.target) this.target = pool.allocate(this.name)
 
     // Handle insert.
     if (this.dirty.insert && this.children) {
@@ -328,10 +339,8 @@ Node.prototype.render = function() {
             var child = this.children[i]
             if (child.dirty) {
                 child.render()
-                var prevChild = this.children[i - 1]
-                var nextElement
-                if (prevChild) nextElement = prevChild.target.nextSibling
-                this.target.insertBefore(child.target, nextElement)
+                var next = this.children[i + 1]
+                this.target.insertBefore(child.target, next && next.target)
             }
         }
     }
@@ -352,7 +361,6 @@ Node.prototype.render = function() {
                 this.target.setAttribute(attrName, value)
             }
         }
-
     }
 
     this.dirty = null
@@ -384,7 +392,7 @@ Node.prototype.remove = function() {
 }
 
 /**
- * Migrate current target and its childs to a new element.
+ * Migrate current target and its children to a new element.
  * F.e. because tagName changed.
  *
  * @api private
@@ -394,8 +402,14 @@ Node.prototype.migrate = function() {
     this.cleanup()
     var oldTarget = this.target
     this.target = pool.allocate(this.name)
-    while (oldTarget.hasChildNodes()) {
-        this.target.appendChild(oldTarget.removeChild(oldContainer.firstChild))
+
+    // Migrate children.
+    if (this.name == '#text') {
+        this.children = null
+    } else {
+        while (oldTarget.hasChildNodes()) {
+            this.target.appendChild(oldTarget.removeChild(oldTarget.firstChild))
+        }
     }
     pool.deallocate(oldTarget)
 }
@@ -431,6 +445,11 @@ Node.prototype.unlink = function() {
         for (var i = 0; i < this.children.length; i++) {
             this.children[i].unlink()
         }
+    }
+    // Remove this node from the children list of its parent.
+    if (this.parent && this.parent.children) {
+        var position = this.parent.children.indexOf(this)
+        if (position >= 0) this.parent.children.splice(position, 1)
     }
     this.name = null
     this.text = null
@@ -474,10 +493,20 @@ Node.prototype.append = function(node) {
  * @api private
  */
 Node.prototype.setAttribute = function(name, value) {
+    if (this.attributes && this.attributes[name] == value) return
     if (!this.dirty) this.dirty = {attributes: {}}
     if (!this.dirty.attributes) this.dirty.attributes = {}
     this.dirty.attributes[name] = value
     renderQueue.enqueue(this)
+}
+
+/**
+ * Remove nodes attribute.
+ * @param {String} name
+ * @api private
+ */
+Node.prototype.removeAttribute = function(name) {
+    if (this.attributes && this.attributes[name] != null) this.setAttribute(name, null)
 }
 
 /**
@@ -487,6 +516,7 @@ Node.prototype.setAttribute = function(name, value) {
  * @api private
  */
 Node.prototype.setText = function(text) {
+    if (text == this.text) return
     if (!this.dirty) this.dirty = {}
     this.dirty.text = true
     this.text = text
@@ -500,6 +530,7 @@ Node.prototype.setText = function(text) {
  * @api private
  */
 Node.prototype.setName = function(name) {
+    if (name == this.name) return
     if (!this.dirty) this.dirty = {}
     this.dirty.name = true
     this.name = name
@@ -571,6 +602,46 @@ Renderer.keypath = keypath
 Renderer.docdiff = docdiff
 
 /**
+ * Start checking render queue and render.
+ *
+ * @api public
+ */
+Renderer.start = function() {
+    function check() {
+        if (!Renderer.running) return
+        Renderer.render()
+        requestAnimationFrame(check)
+    }
+
+    Renderer.running = true
+    requestAnimationFrame(check)
+}
+
+/**
+ * Stop checking render queue and render.
+ *
+ * @api public
+ */
+Renderer.stop = function() {
+    Renderer.running = false
+}
+
+/**
+ * Render all queued nodes.
+ *
+ * @api public
+ */
+Renderer.render = function() {
+    if (!renderQueue.length) return
+    for (var i = 0; i < renderQueue.length; i++) {
+        if (renderQueue[i].dirty) renderQueue[i].render()
+    }
+    renderQueue.empty()
+
+    return this
+}
+
+/**
  * Create a snapshot from the dom.
  *
  * @param {Element} [element]
@@ -588,21 +659,17 @@ Renderer.prototype.refresh = function(element) {
 }
 
 /**
- * Render changes to DOM.
+ * Find changes and apply them to virtual nodes.
  *
  * @param {String} html
  * @return {Renderer} this
  * @api public
  */
-Renderer.prototype.render = function(html) {
+Renderer.prototype.update = function(html) {
     var current = this.node.toJson().children || {}
     var next = serializeHtml(html).children
     var changes = docdiff(current, next)
     this.modifier.apply(changes)
-    for (var i = 0; i < renderQueue.length; i++) {
-        if (renderQueue[i].dirty) renderQueue[i].render()
-    }
-    renderQueue.empty()
 
     return this
 }
