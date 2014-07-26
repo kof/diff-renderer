@@ -1,7 +1,56 @@
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.DiffRenderer=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/renderer')
 
-},{"./lib/renderer":3}],2:[function(_dereq_,module,exports){
+},{"./lib/renderer":7}],2:[function(_dereq_,module,exports){
+'use strict'
+
+/**
+ * Dom nodes pool for dom reuse.
+ *
+ * @api private
+ */
+function ElementsPool() {
+    this.store = {}
+}
+
+module.exports = ElementsPool
+
+/**
+ * Get a dom element. Create if needed.
+ *
+ * @param {String} name
+ * @return {Node}
+ * @api private
+ */
+ElementsPool.prototype.allocate = function(name) {
+    var nodes = this.store[name]
+    return nodes && nodes.length ? nodes.shift() : this.createElement(name)
+}
+
+/**
+ * Release a dom element.
+ *
+ * @param {Node} element
+ * @api private
+ */
+ElementsPool.prototype.deallocate = function(element) {
+    var name = element.nodeName.toLowerCase()
+    if (this.store[name]) this.store[name].push(element)
+    else this.store[name] = [element]
+}
+
+/**
+ * Create dom element.
+ *
+ * @param {String} name - #text, div etc.
+ * @return {Element}
+ * @api private
+ */
+ElementsPool.prototype.createElement = function(name) {
+    return name == '#text' ? document.createTextNode('') : document.createElement(name)
+}
+
+},{}],3:[function(_dereq_,module,exports){
 'use strict'
 
 /**
@@ -33,28 +82,480 @@ module.exports = function(obj, path) {
     return obj
 }
 
-},{}],3:[function(_dereq_,module,exports){
+},{}],4:[function(_dereq_,module,exports){
+'use strict'
+
+var keypath = _dereq_('./keypath')
+var Node = _dereq_('./node')
+
+/**
+ * Modifier applies the diff to the node.
+ *
+ * @param {Node} node
+ * @api private
+ */
+function Modifier(node) {
+    this.node = node
+}
+
+module.exports = Modifier
+
+/**
+ * Exclude properties from applying the diff.
+ *
+ * @type {Object}
+ * @api private
+ */
+Modifier.EXCLUDE = {
+    length: true,
+    parent: true
+}
+
+/**
+ * Apply the diff to the node.
+ *
+ * @param {Array} changes
+ * @return {Modifier} this
+ * @api private
+ */
+Modifier.prototype.apply = function(changes) {
+    for (var i = 0; i < changes.length; i++) {
+        var change = changes[i]
+        var prop = change.path[change.path.length - 1]
+
+        if (Modifier.EXCLUDE[prop]) continue
+
+        var propIsNum = false
+        if (!isNaN(prop)) {
+            propIsNum = true
+            prop = Number(prop)
+        }
+
+        var method = this[prop]
+
+        if (!method) {
+            if (propIsNum) method = this['children']
+            else method = this['attributes']
+        }
+
+        method.call(this, change, prop)
+    }
+
+    return this
+}
+
+/**
+ * Modify a text node.
+ *
+ * @param {Change} change
+ */
+Modifier.prototype.text = function(change) {
+    return
+    var nodePath = change.path.slice(0, change.path.length - 1)
+    var now = change.values.now
+    var node = keypath(this.node, nodePath)
+    node.text = now
+    node.node.textContent = now
+}
+
+Modifier.prototype.children = function(change, prop) {
+    var now = change.values.now
+    var node
+    var nodePath
+
+    if (change.change == 'add') {
+        // Insert node at specific position.
+        if (typeof prop == 'number') {
+            // Find a path to the parent node.
+            if (change.path.length > 1) {
+                nodePath = change.path.slice(0, change.path.length - 1)
+                nodePath.push(prop - 1)
+                node = keypath(this.node.children, nodePath)
+            } else {
+                node = this.node
+            }
+            node.insertAt(prop, new Node(now, node))
+        // Append children.
+        } else {
+            nodePath = change.path.slice(0, change.path.length - 1)
+            node = keypath(this.tree, nodePath)
+            for (key in now) {
+                if (key != 'length') {
+                    node.node.appendChild(
+                        this.createNode(
+                            now[key].name,
+                            now[key].text,
+                            now[key].attributes
+                        )
+                    )
+                }
+            }
+        }
+    } else if (change.change == 'remove') {
+        this.removeNode(change.values.original.node)
+    }
+}
+
+Modifier.prototype.attributes = function(change, prop) {
+    var now = change.values.now
+
+    if (change.change == 'update' || change.change == 'add') {
+        var path = change.path.slice(0, change.path.length - 2)
+        var node = keypath(this.node.children, path)
+        node.setAttribute(prop, now)
+    } else if (change.change == 'remove') {
+        var path = change.path.slice(0, change.path.length - 1)
+        var node = keypath(this.node.children, path)
+        for (prop in change.values.original) {
+            node.setAttribute(prop, null)
+        }
+    }
+}
+
+/**
+ * Change tag name.
+ */
+Modifier.prototype.name = function(change, prop) {
+    var path = change.path.slice(0, change.path.length - 1)
+    var node = keypath(this.node.children, path)
+    var now = change.values.now
+    node.setName(now)
+}
+
+},{"./keypath":3,"./node":5}],5:[function(_dereq_,module,exports){
+'use strict'
+
+var ElementsPool = _dereq_('./elements-pool')
+var renderQueue = _dereq_('./render-queue')
+
+// Global elements pool for all nodes and all renderer instances.
+var pool = new ElementsPool()
+
+/**
+ * Abstract node which can be rendered to a dom node.
+ *
+ * @param {Object} options
+ * @param {String} options.name
+ * @param {String} [options.text]
+ * @param {Object} [options.attributes]
+ * @param {Element} [options.element] if element is passed, node is already rendered
+ * @param {Object} [options.children]
+ * @param {Node} [parent]
+ * @api private
+ */
+function Node(options, parent) {
+    this.name = options.name
+    if (options.text) this.text = options.text
+    if (options.attributes) this.attributes = options.attributes
+    if (options.element) this.target = options.element
+    this.parent = parent
+
+    // Not dirty if element passed.
+    if (options.element) {
+        this.dirty = null
+    } else {
+        this.dirty = {
+            insert: true,
+            text: true,
+            attributes: true,
+            name: true
+        }
+    }
+
+    if (options.children) {
+        this.children = []
+        for (var i in options.children) {
+            if (i != 'length') this.children[i] = new Node(options.children[i], this)
+        }
+        if (this.dirty) this.dirtry.children = true
+    }
+}
+
+module.exports = Node
+
+/**
+ * Serialize instance to json data.
+ *
+ * @return {Object}
+ * @api private
+ */
+Node.prototype.toJson = function() {
+    var json = {name: this.name}
+    if (this.text) json.text = this.text
+    if (this.attributes) json.attributes = this.attributes
+    if (this.children) {
+        json.children = {length: this.children.length}
+        for (var i = 0; i < this.children.length; i++) {
+            json.children[i] = this.children[i].toJson()
+        }
+    }
+
+    return json
+}
+
+/**
+ * Allocate, setup and insert dom element.
+ *
+ * @return {Node}
+ * @api private
+ */
+Node.prototype.render = function() {
+    if (!this.dirty) return this
+
+    if (this.dirty.name) {
+        if (this.target) this.migrate()
+        else this.target = pool.allocate(this.name)
+    }
+
+    if (!this.target) this.target = pool.allocate(this.name)
+
+    // Handle insert.
+    if (this.dirty.insert && this.children) {
+        for (var i = 0; i < this.children.length; i++) {
+            var child = this.children[i]
+            if (child.dirty) {
+                child.render()
+                var prevChild = this.children[i - 1]
+                var nextElement
+                if (prevChild) nextElement = prevChild.target.nextSibling
+                this.target.insertBefore(child.target, nextElement)
+            }
+        }
+    }
+
+    // Handle textContent.
+    if (this.dirty.text && this.text) this.target.textContent = this.text
+
+    // Handle attribtues.
+    if (this.dirty.attributes) {
+        var attributes = this.dirty.attributes == true ? this.attributes : this.dirty.attributes
+        for (var attrName in attributes) {
+            var value = attributes[attrName]
+            if (value == null) {
+                delete this.attributes[attrName]
+                this.target.removeAttribute(attrName)
+            } else {
+                this.attributes[attrName] = value
+                this.target.setAttribute(attrName, value)
+            }
+        }
+
+    }
+
+    this.dirty = null
+
+    return this
+}
+
+/**
+ * Remove a dom node and cleanup.
+ *
+ * @param {Node} node
+ * @return {Node}
+ * @api private
+ */
+Node.prototype.remove = function() {
+    this.detach()
+    this.cleanup()
+
+
+    // Remove children.
+    if (this.children) {
+        for (var i = 0; i < this.children.length; i++) {
+            this.children[i].remove()
+        }
+
+        // Avoid calling .unlink on children again later.
+        this.children = null
+    }
+
+    // Make the element available.
+    pool.deallocate(this.target)
+
+    // unlink all the references.
+    this.unlink()
+
+    return this
+}
+
+/**
+ * Elements tagName has been renamed. Migrate current tagret to the new one.
+ * Migrate child elements.
+ *
+ * @param {Node} node
+ * @return {Node}
+ * @api private
+ */
+Node.prototype.migrate = function() {
+    this.detach()
+    this.cleanup()
+    var oldTarget = this.target
+    this.target = pool.allocate(this.name)
+    while (oldTarget.hasChildNodes()) {
+        this.target.appendChild(oldTarget.removeChild(oldContainer.firstChild))
+    }
+
+    // Make the element available.
+    pool.deallocate(oldTarget)
+
+    return this
+}
+
+Node.prototype.detach = function() {
+    this.target.parentNode.removeChild(this.target)
+
+    return this
+}
+
+Node.prototype.cleanup = function() {
+    if (this.attributes) {
+        for (var attrName in this.attributes) this.target.removeAttribute(attrName)
+    }
+    if (this.text) this.target.textContent = ''
+}
+
+/**
+ * Clean up all references for better garbage collection.
+ *
+ * @return {Node}
+ * @api private
+ */
+Node.prototype.unlink = function() {
+    if (this.children) {
+        for (var i = 0; i < this.children.length; i++) {
+            this.children[i].unlink()
+        }
+    }
+    this.name = null
+    this.text = null
+    this.attributes = null
+    this.parent = null
+    this.children = null
+    this.target = null
+
+    return this
+}
+
+/**
+ * Insert a node at specified position.
+ *
+ * @param {Number} position
+ * @param {Node} node
+ * @return {Node}
+ * @api private
+ */
+Node.prototype.insertAt = function(position, node) {
+    if (!this.children) this.children = []
+    this.children.splice(position, 0, node)
+    if (!this.dirty) this.dirty = {insert: true}
+    else this.dirty.insert = true
+    renderQueue.enqueue(this)
+
+    return this
+}
+
+/**
+ * Set nodes attribute.
+ *
+ * @param {String} name
+ * @param {String|Boolean|Null} value, use null to remove
+ * @return {Node}
+ * @api private
+ */
+Node.prototype.setAttribute = function(name, value) {
+    if (!this.dirty) this.dirty = {attributes: {}}
+    if (!this.dirty.attributes) this.dirty.attributes = {}
+    this.dirty.attributes[name] = value
+    renderQueue.enqueue(this)
+
+    return this
+}
+
+/**
+ * Set text content.
+ *
+ * @param {String} content
+ * @return {Node}
+ * @api private
+ */
+Node.prototype.setText = function(text) {
+    if (!this.dirty) this.dirty = {}
+    this.dirty.text = true
+    this.text = text
+    renderQueue.enqueue(this)
+
+    return this
+}
+
+/**
+ * Element name can't be set, we need to swap out the element.
+ *
+ * @param {String} name
+ * @return {Node}
+ * @api private
+ */
+Node.prototype.setName = function(name) {
+    if (!this.dirty) this.dirty = {}
+    this.dirty.name = true
+    this.name = name
+    renderQueue.enqueue(this)
+}
+
+},{"./elements-pool":2,"./render-queue":6}],6:[function(_dereq_,module,exports){
+'use strict'
+
+/**
+ * Any changed nodes land here to get considered for rendering.
+ *
+ * @type {Array}
+ * @api private
+ */
+var queue = module.exports = []
+
+/**
+ * Add node to the queue.
+ *
+ * @param {Node} node
+ * @api private
+ */
+queue.enqueue = function(node) {
+    queue.push(node)
+}
+
+/**
+ * Empty the queue.
+ *
+ * @param {Node} node
+ * @api private
+ */
+queue.empty = function() {
+    queue.splice(0)
+}
+
+
+},{}],7:[function(_dereq_,module,exports){
 'use strict'
 
 var docdiff = _dereq_('docdiff')
 var keypath = _dereq_('./keypath')
+var Node = _dereq_('./node')
+var Modifier = _dereq_('./modifier')
 var serializeDom = _dereq_('./serialize-dom')
 var serializeHtml = _dereq_('./serialize-html')
-
-var createTextNode = document.createTextNode.bind(document)
-var createElement = document.createElement.bind(document)
+var renderQueue = _dereq_('./render-queue')
 
 /**
  * Renderer constructor.
  *
- * @param {Element} el dom node for serializing and updating.
+ * @param {Element} element dom node for serializing and updating.
  * @api public
  */
-function Renderer(el) {
-    if (!(this instanceof Renderer)) return new Renderer(el)
-    this.el = el
-    this.tree = null
-    this.serialize()
+function Renderer(element) {
+    if (!element) throw new TypeError('DOM element required')
+    if (!(this instanceof Renderer)) return new Renderer(element)
+    this.node = null
+    this.modifier = null
+    this.refresh(element)
 }
 
 module.exports = Renderer
@@ -65,26 +566,20 @@ Renderer.keypath = keypath
 Renderer.docdiff = docdiff
 
 /**
- * Properties we don't need to apply to the dom from the diff.
+ * Create a snapshot from the dom.
  *
- * @type {Object}
+ * @param {Element} [element]
+ * @return {Renderer} this
  * @api public
  */
-Renderer.IGNORE_PROPERTIES = {
-    parent: true,
-    node: true,
-    outerHtml: true,
-    length: true
-}
+Renderer.prototype.refresh = function(element) {
+    if (!element && this.node) element = this.node.target
+    if (this.node) this.node.unlink()
+    var json = serializeDom(element)
+    this.node = new Node(json)
+    this.modifier = new Modifier(this.node)
 
-/**
- * Read DOM state.
- *
- * @return {Object} state
- * @api public
- */
-Renderer.prototype.serialize = function() {
-    return this.tree = serializeDom(this.el).children
+    return this
 }
 
 /**
@@ -95,202 +590,67 @@ Renderer.prototype.serialize = function() {
  * @api public
  */
 Renderer.prototype.render = function(html) {
-    // this.el is empty, nothing to diff.
-    // TODO use nodes pool
-    if (!this.tree) {
-        this.el.innerHTML = html
-        this.serialize()
-        return this
+    var current = this.node.toJson().children || {}
+    var next = serializeHtml(html).children
+    var changes = docdiff(current, next)
+    this.modifier.apply(changes)
+    for (var i = 0; i < renderQueue.length; i++) {
+        if (renderQueue[i].dirty) renderQueue[i].render()
     }
-
-    var newTree = serializeHtml(html).children
-    this.decycle(newTree)
-    var changes = docdiff(this.tree, newTree)
-    for (var i = 0; i < changes.length; i++) {
-        this.apply(changes[i], newTree)
-    }
-    this.tree = newTree
+    renderQueue.empty()
 
     return this
 }
 
-/**
- * Remove circular dependencies from the node or nodes list.
- *
- * @param {Object} obj
- * @api private
- */
-Renderer.prototype.decycle = function(obj) {
-    if (obj.length) {
-        for (var key in obj) this.decycle(obj[key])
-    } else {
-        delete obj.parent
-        delete obj.node
-        if (obj.children) this.decycle(obj.children)
-    }
-}
-
-/**
- * Apply change to the dom.
- *
- * @param {Object} change
- * @param {Object} newTree
- * @api private
- */
-Renderer.prototype.apply = function(change, newTree) {
-    var prop = change.path[change.path.length - 1]
-    var propIsNum = !isNaN(prop)
-    var pos
-    var itemPath, item, newNode
-    var key
-    var now = change.values.now
-
-    if (Renderer.IGNORE_PROPERTIES[prop]) return
-
-    // Change text node
-    if (prop == 'text') {
-        itemPath = change.path.slice(0, change.path.length - 1)
-        item = keypath(this.tree, itemPath)
-        item.node.textContent = now
-    // Create node/nodes
-    } else if (prop == 'children' || propIsNum) {
-        if (change.change == 'add') {
-            // Insert node at specific position.
-            if (propIsNum) {
-                itemPath = change.path.slice(0, change.path.length - 1)
-                // Add prev node to the path.
-                itemPath.push(prop - 1)
-                item = keypath(this.tree, itemPath)
-                // In case current change is based on previous change, previous
-                // of the same iteration, previous change is not applied to the
-                // current tree yet.
-                if (!item) item = keypath(newTree, itemPath)
-
-                newNode = this.createNode(now.name, now.text, now.attributes)
-                this.insertAfter(item.node, newNode)
-
-                // Link the node in the new tree.
-                keypath(newTree, change.path).node = newNode
-            // Append children.
-            } else {
-                itemPath = change.path.slice(0, change.path.length - 1)
-                item = keypath(this.tree, itemPath)
-                for (key in now) {
-                    if (key != 'length') {
-                        item.node.appendChild(
-                            this.createNode(
-                                now[key].name,
-                                now[key].text,
-                                now[key].attributes
-                            )
-                        )
-                    }
-                }
-            }
-        } else if (change.change == 'remove') {
-            this.removeNode(change.values.original.node)
-        }
-    // Change/add attributes
-    } else {
-        if (change.change == 'update' || change.change == 'add') {
-            itemPath = change.path.slice(0, change.path.length - 2)
-            item = keypath(this.tree, itemPath)
-            item.node.setAttribute(prop, now)
-        } else if (change.change == 'remove') {
-            itemPath = change.path.slice(0, change.path.length - 1)
-            item = keypath(this.tree, itemPath)
-            for (prop in change.values.original) {
-                item.node.removeAttribute(prop)
-            }
-        }
-    }
-}
-
-/**
- * Create dom element.
- *
- * @param {String} name - #text, div etc.
- * @param {String} [text] text for text node
- * @param {Object} [attrs] node attributes
- * @return {Element}
- * @api private
- */
-Renderer.prototype.createNode = function(name, text, attrs) {
-    var el = name == '#text' ? createTextNode(text) : createElement(name)
-
-    for (var attr in attrs) el.setAttribute(attr, attrs[attr])
-
-    return el
-}
-
-/**
- * Insert a dom node after a node.
- *
- * @param {Node} prev
- * @param {Node} node
- * @api private
- */
-Renderer.prototype.insertAfter = function(prev, node) {
-    prev.parentNode.insertBefore(node, prev.nextSibling)
-}
-
-/**
- * Remove a dom node
- *
- * @param {Node} node
- * @api private
- */
-Renderer.prototype.removeNode = function(node) {
-    node.parentNode.removeChild(node)
-}
-
-},{"./keypath":2,"./serialize-dom":4,"./serialize-html":5,"docdiff":7}],4:[function(_dereq_,module,exports){
+},{"./keypath":3,"./modifier":4,"./node":5,"./render-queue":6,"./serialize-dom":8,"./serialize-html":9,"docdiff":11}],8:[function(_dereq_,module,exports){
 'use strict'
 
 /**
- * Walk through the dom and create the same tree like html serializer.
+ * Walk through the dom and create a json snapshot.
  *
- * @param {Element} el
+ * @param {Element} element
  * @return {Object}
  * @api private
  */
-module.exports = function serialize(el) {
-    var node = {name: el.nodeName.toLowerCase(), node: el}
-    var attr = el.attributes
-    var attrLength
-    var childNodes = el.childNodes
-    var childNodesLength
-    var i
-
-    if (node.name == '#text') {
-        node.text = el.textContent
-        return node
+module.exports = function serialize(element) {
+    var json = {
+        name: element.nodeName.toLowerCase(),
+        element: element
     }
 
+    if (json.name == '#text') {
+        json.text = element.textContent
+        return json
+    }
+
+    var attr = element.attributes
     if (attr && attr.length) {
-        node.attributes = {}
-        attrLength = attr.length
-        for (i = 0; i < attrLength; i++) {
-            node.attributes[attr[i].name] = attr[i].value
+        json.attributes = {}
+        var attrLength = attr.length
+        for (var i = 0; i < attrLength; i++) {
+            json.attributes[attr[i].name] = attr[i].value
         }
     }
 
+    var childNodes = element.childNodes
     if (childNodes && childNodes.length) {
-        node.children = {length: childNodes.length}
-        childNodesLength = childNodes.length
-        for (i = 0; i < childNodesLength; i++) {
-            node.children[i] = serialize(childNodes[i])
+        json.children = {length: childNodes.length}
+        var childNodesLength = childNodes.length
+        for (var i = 0; i < childNodesLength; i++) {
+            json.children[i] = serialize(childNodes[i])
         }
     }
 
-    return node
+    return json
 }
 
-},{}],5:[function(_dereq_,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 'use strict'
 
 /**
- * Parse html and create a json tree.
+ * Simplified html parser. The fastest one written in javascript.
+ * It is naive and requires valid html.
+ * You might want to validate your html before to pass it here.
  *
  * @param {String} html
  * @param {Object} [parent]
@@ -298,6 +658,10 @@ module.exports = function serialize(el) {
  * @api private
  */
 module.exports = function serialize(str, parent) {
+    str = str.trim()
+    if (!parent) parent = {name: 'root'}
+    if (!str) return parent
+
     var i = 0
     var end = false
     var added = false
@@ -312,14 +676,10 @@ module.exports = function serialize(str, parent) {
     var isQuote, openQuote
     var attrName, attrValue
     var inText = false
-    if (!parent) parent = {name: 'root'}
-    var tag = {parent: parent}
 
-
-    if (str) {
-        tag.name = ''
-    } else {
-        return parent
+    var json = {
+        parent: parent,
+        name: ''
     }
 
     while (!end) {
@@ -337,21 +697,21 @@ module.exports = function serialize(str, parent) {
         } else {
             if (inTag) {
                 if (inCloser) {
-                    delete tag.name
+                    delete json.name
                 // Tag name
-                } else if (inTagName || !tag.name) {
+                } else if (inTagName || !json.name) {
                     inTagName = true
-                    if ((tag.name && isWhite) || isSlash) {
+                    if ((json.name && isWhite) || isSlash) {
                         inTagName = false
-                        if (!tag.name) {
+                        if (!json.name) {
                             inCloser = true
                             if (parent.parent) parent = parent.parent
                         }
                     } else if (isClose) {
-                        serialize(str.substr(i + 1), inClosing || inCloser ? parent : tag)
+                        serialize(str.substr(i + 1), inClosing || inCloser ? parent : json)
                         return parent
                     } else if (!isWhite) {
-                        tag.name += current
+                        json.name += current
                     }
                 // Attribute name
                 } else if (inAttrName || !attrName) {
@@ -363,11 +723,11 @@ module.exports = function serialize(str, parent) {
 
                         inAttrName = false
                         if (attrName) {
-                            if (!tag.attributes) tag.attributes = {}
-                            tag.attributes[attrName] = ''
+                            if (!json.attributes) json.attributes = {}
+                            json.attributes[attrName] = ''
                         }
                     } else if (isClose) {
-                        serialize(str.substr(i + 1), inClosing || inCloser ? parent : tag)
+                        serialize(str.substr(i + 1), inClosing || inCloser ? parent : json)
                         return parent
                     } else if (!isWhite) {
                         attrName += current
@@ -379,7 +739,7 @@ module.exports = function serialize(str, parent) {
                     if (isQuote) {
                         if (inAttrValue) {
                             if (current == openQuote) {
-                                if (attrValue) tag.attributes[attrName] = attrValue
+                                if (attrValue) json.attributes[attrName] = attrValue
                                 inAttrValue = false
                                 attrName = attrValue = null
                             } else {
@@ -404,14 +764,14 @@ module.exports = function serialize(str, parent) {
             } else {
                 inText = true
                 inTag = false
-                if (!tag.name) tag.name = '#text'
-                if (tag.text == null) tag.text = ''
-                tag.text += current
+                if (!json.name) json.name = '#text'
+                if (json.text == null) json.text = ''
+                json.text += current
             }
 
-            if (tag.name && !added) {
+            if (json.name && !added) {
                 if (!parent.children) parent.children = {length: 0}
-                parent.children[parent.children.length] = tag
+                parent.children[parent.children.length] = json
                 parent.children.length++
                 added = true
             }
@@ -425,7 +785,7 @@ module.exports = function serialize(str, parent) {
     return parent
 }
 
-},{}],6:[function(_dereq_,module,exports){
+},{}],10:[function(_dereq_,module,exports){
 
 var utils = _dereq_('./utils');
 
@@ -495,7 +855,7 @@ module.exports = function (original, now) {
 
   return diff;
 };
-},{"./utils":8}],7:[function(_dereq_,module,exports){
+},{"./utils":12}],11:[function(_dereq_,module,exports){
 
 var arraydiff = _dereq_('./arraydiff');
 var utils = _dereq_('./utils');
@@ -584,7 +944,7 @@ function Change (path, key, change, type, now, original, added, removed) {
   }
 }
 
-},{"./arraydiff":6,"./utils":8}],8:[function(_dereq_,module,exports){
+},{"./arraydiff":10,"./utils":12}],12:[function(_dereq_,module,exports){
 
 /**
  * isObject

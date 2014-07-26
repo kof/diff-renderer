@@ -5,7 +5,7 @@
             body {
                 margin: 1rem;
             }
-            .source, .new-source, .diff, .resultEl {
+            .source, .new-source, .diff, .result {
                 float: left;
                 width: 24%;
                 margin-right: 1%;
@@ -26,7 +26,7 @@
                 margin-top: 3.5rem;
                 border: 2px solid red;
             }
-            .resultEl .output {
+            .result .output {
                 margin-top: 3.5rem;
                 border: 2px solid yellow;
             }
@@ -70,7 +70,7 @@
             <h2>Diff</h2>
             <pre class="output"></pre>
         </div>
-        <div class="resultEl">
+        <div class="result">
             <h2>Rendered</h2>
             <div class="output"></div>
         </div>
@@ -147,7 +147,7 @@ bbb
                 var sourceTextareaEl = $('.source .output')[0]
                 var newSourceTextareaEl = $('.new-source .output')[0]
                 var diffEl = $('.diff .output')[0]
-                var resultEl = $('.resultEl .output')[0]
+                var resultEl = $('.result .output')[0]
                 var renderer = new DiffRenderer(resultEl)
 
 
@@ -155,9 +155,8 @@ bbb
                     var currentHtml = $('#tpl' + index + '-current')[0].textContent.trim()
                     sourceTextareaEl.value = currentHtml
                     newSourceTextareaEl.value = $('#tpl' + index + '-new')[0].textContent.trim()
-                    resultEl.innerHTML = currentHtml
                     diffEl.innerHTML = ''
-                    renderer.serialize()
+                    renderer.refresh().render(currentHtml)
                 }
 
                 var templatesSelect = $('.templates')[0]
@@ -167,13 +166,15 @@ bbb
                 })
 
                 $('.render')[0].addEventListener('click', function() {
-                    renderer.render(newSourceTextareaEl.value)
-
-                    var oldTree = DiffRenderer.serializeHtml(sourceTextareaEl.value)
-                    renderer.decycle(oldTree)
-                    renderer.decycle(renderer.tree)
-                    var diff = DiffRenderer.docdiff(oldTree.children, renderer.tree)
+                    /*
+                    var oldTree = DiffRenderer.serializeHtml(sourceTextareaEl.value).children
+                    var newTree = DiffRenderer.serializeHtml(newSourceTextareaEl.value).children
+                    DiffRenderer.utils.decycle(oldTree)
+                    DiffRenderer.utils.decycle(newTree)
+                    var diff = DiffRenderer.docdiff(oldTree, newTree)
                     diffEl.innerHTML = JSON.stringify(diff, null, '  ')
+*/
+                    renderer.render(newSourceTextareaEl.value)
                 })
             }())
         </script>
