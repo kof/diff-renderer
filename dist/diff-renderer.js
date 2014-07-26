@@ -112,10 +112,9 @@ Modifier.EXCLUDE = {
 }
 
 /**
- * Apply the diff to the node.
+ * Apply the changes to the node.
  *
  * @param {Array} changes
- * @return {Modifier} this
  * @api private
  */
 Modifier.prototype.apply = function(changes) {
@@ -132,54 +131,58 @@ Modifier.prototype.apply = function(changes) {
         }
 
         var method = this[prop]
-
         if (!method) {
             if (propIsNum) method = this['children']
             else method = this['attributes']
         }
-
         method.call(this, change, prop)
     }
-
-    return this
 }
 
 /**
  * Modify a text node.
  *
  * @param {Change} change
+ * @param {String} prop
+ * @api private
  */
-Modifier.prototype.text = function(change) {
-    return
-    var nodePath = change.path.slice(0, change.path.length - 1)
+Modifier.prototype.text = function(change, prop) {
+    var path = change.path.slice(0, change.path.length - 1)
     var now = change.values.now
-    var node = keypath(this.node, nodePath)
-    node.text = now
-    node.node.textContent = now
+    console.log(change, path, this.node)
+    var node = keypath(this.node.children, path)
+    node.setText(now)
 }
 
+/**
+ * Insert/remove child nodes.
+ *
+ * @param {Change} change
+ * @param {String|Number} prop
+ * @api private
+ */
 Modifier.prototype.children = function(change, prop) {
     var now = change.values.now
     var node
-    var nodePath
+    var path
 
     if (change.change == 'add') {
         // Insert node at specific position.
         if (typeof prop == 'number') {
             // Find a path to the parent node.
             if (change.path.length > 1) {
-                nodePath = change.path.slice(0, change.path.length - 1)
-                nodePath.push(prop - 1)
-                node = keypath(this.node.children, nodePath)
+                path = change.path.slice(0, change.path.length - 1)
+                path.push(prop - 1)
+                node = keypath(this.node.children, path)
             } else {
                 node = this.node
             }
             node.insertAt(prop, new Node(now, node))
         // Append children.
         } else {
-            nodePath = change.path.slice(0, change.path.length - 1)
-            node = keypath(this.tree, nodePath)
-            for (key in now) {
+            path = change.path.slice(0, change.path.length - 1)
+            node = keypath(this.tree, path)
+            for (var key in now) {
                 if (key != 'length') {
                     node.node.appendChild(
                         this.createNode(
@@ -196,6 +199,13 @@ Modifier.prototype.children = function(change, prop) {
     }
 }
 
+/**
+ * Modify attributes.
+ *
+ * @param {Change} change
+ * @param {String} prop
+ * @api private
+ */
 Modifier.prototype.attributes = function(change, prop) {
     var now = change.values.now
 
@@ -214,6 +224,10 @@ Modifier.prototype.attributes = function(change, prop) {
 
 /**
  * Change tag name.
+ *
+ * @param {Change} change
+ * @param {String} prop
+ * @api private
  */
 Modifier.prototype.name = function(change, prop) {
     var path = change.path.slice(0, change.path.length - 1)
@@ -267,7 +281,7 @@ function Node(options, parent) {
         for (var i in options.children) {
             if (i != 'length') this.children[i] = new Node(options.children[i], this)
         }
-        if (this.dirty) this.dirtry.children = true
+        if (this.dirty) this.dirty.children = true
     }
 }
 
@@ -294,9 +308,8 @@ Node.prototype.toJson = function() {
 }
 
 /**
- * Allocate, setup and insert dom element.
+ * Allocate, setup and attach dom element.
  *
- * @return {Node}
  * @api private
  */
 Node.prototype.render = function() {
@@ -343,8 +356,6 @@ Node.prototype.render = function() {
     }
 
     this.dirty = null
-
-    return this
 }
 
 /**
@@ -358,7 +369,6 @@ Node.prototype.remove = function() {
     this.detach()
     this.cleanup()
 
-
     // Remove children.
     if (this.children) {
         for (var i = 0; i < this.children.length; i++) {
@@ -369,21 +379,14 @@ Node.prototype.remove = function() {
         this.children = null
     }
 
-    // Make the element available.
     pool.deallocate(this.target)
-
-    // unlink all the references.
     this.unlink()
-
-    return this
 }
 
 /**
- * Elements tagName has been renamed. Migrate current tagret to the new one.
- * Migrate child elements.
+ * Migrate current target and its childs to a new element.
+ * F.e. because tagName changed.
  *
- * @param {Node} node
- * @return {Node}
  * @api private
  */
 Node.prototype.migrate = function() {
@@ -394,19 +397,23 @@ Node.prototype.migrate = function() {
     while (oldTarget.hasChildNodes()) {
         this.target.appendChild(oldTarget.removeChild(oldContainer.firstChild))
     }
-
-    // Make the element available.
     pool.deallocate(oldTarget)
-
-    return this
 }
 
+/**
+ * Remove target from the render tree.
+ *
+ * @api private
+ */
 Node.prototype.detach = function() {
     this.target.parentNode.removeChild(this.target)
-
-    return this
 }
 
+/**
+ * Clean up everything changed on current target.
+ *
+ * @api private
+ */
 Node.prototype.cleanup = function() {
     if (this.attributes) {
         for (var attrName in this.attributes) this.target.removeAttribute(attrName)
@@ -417,7 +424,6 @@ Node.prototype.cleanup = function() {
 /**
  * Clean up all references for better garbage collection.
  *
- * @return {Node}
  * @api private
  */
 Node.prototype.unlink = function() {
@@ -432,8 +438,6 @@ Node.prototype.unlink = function() {
     this.parent = null
     this.children = null
     this.target = null
-
-    return this
 }
 
 /**
@@ -441,17 +445,14 @@ Node.prototype.unlink = function() {
  *
  * @param {Number} position
  * @param {Node} node
- * @return {Node}
  * @api private
  */
 Node.prototype.insertAt = function(position, node) {
     if (!this.children) this.children = []
     this.children.splice(position, 0, node)
-    if (!this.dirty) this.dirty = {insert: true}
-    else this.dirty.insert = true
+    if (!this.dirty) this.dirty = {}
+    this.dirty.insert = true
     renderQueue.enqueue(this)
-
-    return this
 }
 
 /**
@@ -459,7 +460,6 @@ Node.prototype.insertAt = function(position, node) {
  *
  * @param {String} name
  * @param {String|Boolean|Null} value, use null to remove
- * @return {Node}
  * @api private
  */
 Node.prototype.setAttribute = function(name, value) {
@@ -467,15 +467,12 @@ Node.prototype.setAttribute = function(name, value) {
     if (!this.dirty.attributes) this.dirty.attributes = {}
     this.dirty.attributes[name] = value
     renderQueue.enqueue(this)
-
-    return this
 }
 
 /**
  * Set text content.
  *
  * @param {String} content
- * @return {Node}
  * @api private
  */
 Node.prototype.setText = function(text) {
@@ -483,15 +480,12 @@ Node.prototype.setText = function(text) {
     this.dirty.text = true
     this.text = text
     renderQueue.enqueue(this)
-
-    return this
 }
 
 /**
  * Element name can't be set, we need to swap out the element.
  *
  * @param {String} name
- * @return {Node}
  * @api private
  */
 Node.prototype.setName = function(name) {

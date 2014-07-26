@@ -5,29 +5,25 @@
             body {
                 margin: 1rem;
             }
-            .source, .new-source, .diff, .result {
+            .source, .diff, .result {
                 float: left;
-                width: 24%;
+                width: 32.3%;
                 margin-right: 1%;
                 height: 100%;
             }
-            .source .output,
-            .new-source .output {
-                border: 2px solid green;
-            }
-            .source .templates {
+            .source .render {
                 width: 100%;
-                margin-bottom: 1rem;
             }
-            .new-source .output {
-                margin-top: 0.9rem;
+            .source .output {
+                border: 2px solid green;
+                margin-top: 1rem;
             }
             .diff .output {
-                margin-top: 3.5rem;
+                margin-top: 3.6rem;
                 border: 2px solid red;
             }
             .result .output {
-                margin-top: 3.5rem;
+                margin-top: 3.6rem;
                 border: 2px solid yellow;
             }
             .output {
@@ -50,18 +46,6 @@
     </head>
     <body>
         <div class="source">
-            <h2>Current html</h2>
-            <select class="templates" name="template">
-                <option selected value="0">Change/remove/add attributes</option>
-                <option value="1">Change/remove/add text nodes</option>
-                <option value="2">Insert an element at the end.</option>
-                <option value="3">Insert an element at the beginning.</option>
-                <option value="4">Insert an element in the middle.</option>
-                <option value="5">Remove element.</option>
-            </select>
-            <textarea class="output" readonly></textarea>
-        </div>
-        <div class="new-source">
             <h2>New html</h2>
             <button class="render">Render diff</button>
             <textarea class="output"></textarea>
@@ -71,71 +55,14 @@
             <pre class="output"></pre>
         </div>
         <div class="result">
-            <h2>Rendered</h2>
+            <h2>Rendered view</h2>
             <div class="output"></div>
         </div>
 
-<script id="tpl0-current" type="text">
+<script id="initial" type="text">
+<div class="item">aaa</div>
 <div class="item"></div>
 <div class="item"></div>
-<div class="item"></div>
-</script>
-<script id="tpl0-new" type="text">
-<div class="item"></div>
-<div class="item" id="item-id"></div>
-<div></div>
-</script>
-
-<script id="tpl1-current" type="text">
-aaa
-<div>aaa</div>
-aaa
-<div></div>
-</script>
-<script id="tpl1-new" type="text">
-bbb
-<div>bbb</div>
-<div>bbb</div>
-</script>
-
-<script id="tpl2-current" type="text">
-<div class="item"></div>
-<div class="item"></div>
-</script>
-<script id="tpl2-new" type="text">
-<div class="item"></div>
-<div class="item"></div>
-<div class="item2"></div>
-</script>
-
-<script id="tpl3-current" type="text">
-<div class="item"></div>
-<div class="item"></div>
-</script>
-<script id="tpl3-new" type="text">
-<div class="item2"></div>
-<div class="item"></div>
-<div class="item"></div>
-</script>
-
-<script id="tpl4-current" type="text">
-<div class="item"></div>
-<div class="item"></div>
-</script>
-<script id="tpl4-new" type="text">
-<div class="item"></div>
-<div class="item2"></div>
-<div class="item"></div>
-</script>
-
-<script id="tpl5-current" type="text">
-<div class="item item1"></div>
-<div class="item item2"></div>
-<div class="item item3"></div>
-</script>
-<script id="tpl5-new" type="text">
-<div class="item item1"></div>
-<div class="item item3"></div>
 </script>
 
         <script>
@@ -144,38 +71,27 @@ bbb
                     return document.querySelectorAll(s)
                 }
 
-                var sourceTextareaEl = $('.source .output')[0]
-                var newSourceTextareaEl = $('.new-source .output')[0]
+                var sourceEl = $('.source textarea')[0]
                 var diffEl = $('.diff .output')[0]
                 var resultEl = $('.result .output')[0]
                 var renderer = new DiffRenderer(resultEl)
 
-
-                function changeTemplate(index) {
-                    var currentHtml = $('#tpl' + index + '-current')[0].textContent.trim()
-                    sourceTextareaEl.value = currentHtml
-                    newSourceTextareaEl.value = $('#tpl' + index + '-new')[0].textContent.trim()
-                    diffEl.innerHTML = ''
-                    renderer.refresh().render(currentHtml)
-                }
-
-                var templatesSelect = $('.templates')[0]
-                changeTemplate(templatesSelect.value)
-                templatesSelect.addEventListener('change', function() {
-                    changeTemplate(templatesSelect.value)
-                })
-
-                $('.render')[0].addEventListener('click', function() {
+                function render() {
                     /*
                     var oldTree = DiffRenderer.serializeHtml(sourceTextareaEl.value).children
-                    var newTree = DiffRenderer.serializeHtml(newSourceTextareaEl.value).children
+                    var newTree = DiffRenderer.serializeHtml(sourceEl.value).children
                     DiffRenderer.utils.decycle(oldTree)
                     DiffRenderer.utils.decycle(newTree)
                     var diff = DiffRenderer.docdiff(oldTree, newTree)
                     diffEl.innerHTML = JSON.stringify(diff, null, '  ')
 */
-                    renderer.render(newSourceTextareaEl.value)
-                })
+                    renderer.render(sourceEl.value)
+                }
+
+                sourceEl.value = $('#initial')[0].innerHTML.trim()
+                render()
+
+                $('.render')[0].addEventListener('click', render)
             }())
         </script>
     </body>
