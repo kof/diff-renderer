@@ -54,7 +54,7 @@ ElementsPool.prototype.createElement = function(name) {
 'use strict'
 
 /**
- * Find value in json obj using dots path notation.
+ * Find value in json obj using array or dot path notation.
  *
  * http://docs.mongodb.org/manual/core/document/#document-dot-notation
  *
@@ -149,7 +149,6 @@ Modifier.prototype.apply = function(changes) {
 Modifier.prototype.text = function(change, prop) {
     var path = change.path.slice(0, change.path.length - 1)
     var now = change.values.now
-    console.log(change, path, this.node)
     var node = keypath(this.node.children, path)
     node.setText(now)
 }
@@ -181,17 +180,10 @@ Modifier.prototype.children = function(change, prop) {
         // Append children.
         } else {
             path = change.path.slice(0, change.path.length - 1)
-            node = keypath(this.tree, path)
+            node = keypath(this.node.children, path)
+            console.log(change, path, node)
             for (var key in now) {
-                if (key != 'length') {
-                    node.node.appendChild(
-                        this.createNode(
-                            now[key].name,
-                            now[key].text,
-                            now[key].attributes
-                        )
-                    )
-                }
+                if (!Modifier.EXCLUDE[key]) node.append(new Node(now[key], node))
             }
         }
     } else if (change.change == 'remove') {
@@ -448,11 +440,22 @@ Node.prototype.unlink = function() {
  * @api private
  */
 Node.prototype.insertAt = function(position, node) {
-    if (!this.children) this.children = []
-    this.children.splice(position, 0, node)
     if (!this.dirty) this.dirty = {}
     this.dirty.insert = true
+    if (!this.children) this.children = []
+    this.children.splice(position, 0, node)
     renderQueue.enqueue(this)
+}
+
+/**
+ * Insert a node at the end.
+ *
+ * @param {Node} node
+ * @api private
+ */
+Node.prototype.append = function(node) {
+    var position = this.children ? this.children.length : 0
+    this.insertAt(position, node)
 }
 
 /**
