@@ -1,30 +1,223 @@
-test('change attribute')
-test('add attribute')
-test('remove attribtue')
+function getView() {
+    var element = document.createElement('div')
+    var renderer = new DiffRenderer(element)
+    return {
+        render: function(html) {
+            renderer.update(html)
+            DiffRenderer.render()
+        },
+        element: element
+    }
+}
 
-test('change text node text')
-test('remove text node')
-test('change text node text within a div')
-test('remove text node within a div')
+module('DiffRenderer')
 
-test('replace multiple divs by 1 other div')
-test('replace multiple divs by 1 text node')
-test('replace multiple divs by multiple p')
-test('replace first div by p')
-test('replace last div by p')
-test('replace middle div by p')
+test('render a tag', function() {
+    var view = getView()
+    view.render('<a/>')
+    equal(view.element.innerHTML, '<a></a>', 'self closing')
+    view.render('<a></a>')
+    equal(view.element.innerHTML, '<a></a>', 'not self closing')
+})
 
-test('append div')
-test('append text node')
-test('prepend div')
-test('prepend text node')
-test('insert at div')
-test('insert at text node')
+test('render a text node', function() {
+    var view = getView()
+    view.render('abc')
+    equal(view.element.innerHTML, 'abc', 'without spaces')
+    view.render('  abc  ')
+    equal(view.element.innerHTML, '  abc  ', 'with spaces')
+})
 
-test('change first div to text')
-test('change first div to p')
-test('change first div to p and migrate children')
+test('add an attribute', function() {
+    var view = getView()
+    view.render('<a/>')
+    view.render('<a class="b"/>')
+    equal(view.element.innerHTML, '<a class="b"></a>', 'add class')
+    view.render('<a class="b" id="c"/>')
+    equal(view.element.innerHTML, '<a class="b" id="c"></a>', 'add id')
+    view.render('<a class="b" id="c" href=""/>')
+    equal(view.element.innerHTML, '<a class="b" id="c" href=""></a>', 'add empty href')
+    view.render('<a class="b" id="c" href="" disabled/>')
+    equal(view.element.innerHTML, '<a class="b" id="c" href="" disabled=""></a>', 'add disabled')
+})
 
-test('remove last node')
-test('remove first node')
-test('remove middle node')
+test('add an attribute', function() {
+    var view = getView()
+    view.render('<a/>')
+    view.render('<a class="b"/>')
+    equal(view.element.innerHTML, '<a class="b"></a>', 'add class')
+    view.render('<a class="b" id="c"/>')
+    equal(view.element.innerHTML, '<a class="b" id="c"></a>', 'add id')
+    view.render('<a class="b" id="c" href=""/>')
+    equal(view.element.innerHTML, '<a class="b" id="c" href=""></a>', 'add empty href')
+    view.render('<a class="b" id="c" href="" disabled/>')
+    equal(view.element.innerHTML, '<a class="b" id="c" href="" disabled=""></a>', 'add disabled')
+})
+
+test('change an attribute', function() {
+    var view = getView()
+    view.render('<a class="b"/>')
+    view.render('<a class="c d"/>')
+    equal(view.element.innerHTML, '<a class="c d"></a>')
+})
+
+test('change an attributes', function() {
+    var view = getView()
+    view.render('<a class="b" id="e"/>')
+    view.render('<a class="c d" id="f"/>')
+    equal(view.element.innerHTML, '<a class="c d" id="f"></a>')
+})
+
+test('remove an attribute', function() {
+    var view = getView()
+    view.render('<a class="b"/>')
+    view.render('<a/>')
+    equal(view.element.innerHTML, '<a></a>')
+})
+
+test('remove all attributes', function() {
+    var view = getView()
+    view.render('<a class="b" id="c"/>')
+    view.render('<a/>')
+    equal(view.element.innerHTML, '<a></a>')
+})
+
+test('remove one of attributes', function() {
+    var view = getView()
+    view.render('<a class="b" id="c"/>')
+    view.render('<a id="c"/>')
+    equal(view.element.innerHTML, '<a id="c"></a>')
+})
+
+test('change text node text', function() {
+    var view = getView()
+    view.render('abc')
+    view.render('a')
+    equal(view.element.innerHTML, 'a')
+})
+
+test('change text node text within a tag', function() {
+    var view = getView()
+    view.render('<a>abc</a>')
+    view.render('<a>a</a>')
+    equal(view.element.innerHTML, '<a>a</a>')
+})
+
+test('replace multiple tags by 1 other tag', function() {
+    var view = getView()
+    view.render('<a/><b/>')
+    view.render('<c/>')
+    equal(view.element.innerHTML, '<c></c>')
+})
+
+test('replace multiple tags by 1 text node', function() {
+    var view = getView()
+    view.render('<a/><b/>')
+    view.render('aaa')
+    equal(view.element.innerHTML, 'aaa')
+})
+
+test('replace multiple tags by multiple tags', function() {
+    var view = getView()
+    view.render('<a/><b/>')
+    view.render('<c/><d/>')
+    equal(view.element.innerHTML, '<c></c><d></d>')
+})
+
+test('replace first tag by another one', function() {
+    var view = getView()
+    view.render('<a/><b/>')
+    view.render('<c/><b/>')
+    equal(view.element.innerHTML, '<c></c><b></b>')
+})
+
+test('replace first tag by text node', function() {
+    var view = getView()
+    view.render('<a/><b/>')
+    view.render('a<b/>')
+    equal(view.element.innerHTML, 'a<b></b>')
+})
+
+test('replace last tag by another one', function() {
+    var view = getView()
+    view.render('<a/><b/>')
+    view.render('<a/><c/>')
+    equal(view.element.innerHTML, '<a></a><c></c>')
+})
+
+test('replace middle tag by another one', function() {
+    var view = getView()
+    view.render('<a/><b/><c/>')
+    view.render('<a/><d/><c/>')
+    equal(view.element.innerHTML, '<a></a><d></d><c></c>')
+})
+
+test('append a tag', function() {
+    var view = getView()
+    view.render('<a/>')
+    view.render('<a><b/></a>')
+    equal(view.element.innerHTML, '<a><b></b></a>')
+})
+
+test('append a text node', function() {
+    var view = getView()
+    view.render('<a/>')
+    view.render('<a>b</a>')
+    equal(view.element.innerHTML, '<a>b</a>')
+})
+
+test('prepend a tag', function() {
+    var view = getView()
+    view.render('<a/>')
+    view.render('<b/><a/>')
+    equal(view.element.innerHTML, '<b><b/><a></a>')
+})
+
+test('prepend a text node', function() {
+    var view = getView()
+    view.render('<a/>')
+    view.render('b<a/>')
+    equal(view.element.innerHTML, 'b<a></a>')
+})
+
+test('migrate children', function() {
+    var view = getView()
+    view.render('<a>a</a><b/>')
+    view.render('<b>a</b><a/>')
+    equal(view.element.innerHTML, '<b>a</b><a></a>')
+})
+
+test('remove text node within a tag', function() {
+    var view = getView()
+    view.render('<a>abc</a>')
+    view.render('<a></a>')
+    equal(view.element.innerHTML, '<a></a>')
+})
+
+test('remove text node', function() {
+    var view = getView()
+    view.render('abc')
+    view.render('')
+    equal(view.element.innerHTML, '')
+})
+
+test('remove first tag', function() {
+    var view = getView()
+    view.render('<a/><b/><c/>')
+    view.render('<b/>')
+    equal(view.element.innerHTML, '<b></b><c></c>')
+})
+
+test('remove middle tag', function() {
+    var view = getView()
+    view.render('<a/><b/><c/>')
+    view.render('<a/><c/>')
+    equal(view.element.innerHTML, '<a></a><c></c>')
+})
+
+test('remove last tag', function() {
+    var view = getView()
+    view.render('<a/><b/><c/>')
+    view.render('<a/><b/>')
+    equal(view.element.innerHTML, '<a></a><b></b>')
+})

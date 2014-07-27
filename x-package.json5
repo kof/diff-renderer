@@ -20,10 +20,12 @@
     overlay: {
         npm: {
             devDependencies: {
-                bench: '0.3.5',
-                browserify: '3.24.13',
-                'html-minifier': '0.5.5',
-                htmltree: '0.0.4'
+                bench: '~0.3.5',
+                browserify: '~3.24.13',
+                'html-minifier': '~0.5.5',
+                htmltree: '~0.0.4',
+                qunitjs: '~1.14.0',
+                qunit: '~0.7.2'
             },
             dependencies: {
                 docdiff: '0.0.1'

@@ -1,7 +1,48 @@
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.DiffRenderer=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/renderer')
 
-},{"./lib/renderer":7}],2:[function(_dereq_,module,exports){
+},{"./lib/renderer":9}],2:[function(_dereq_,module,exports){
+/**
+ * Copyright 2013-2014 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * @providesModule adler32
+ */
+
+/* jslint bitwise:true */
+
+"use strict";
+
+var MOD = 65521;
+
+// This is a clean-room implementation of adler32 designed for detecting
+// if markup is not what we expect it to be. It does not need to be
+// cryptographically strong, only reasonable good at detecting if markup
+// generated on the server is different than that on the client.
+function adler32(data) {
+  var a = 1;
+  var b = 0;
+  for (var i = 0; i < data.length; i++) {
+    a = (a + data.charCodeAt(i)) % MOD;
+    b = (b + a) % MOD;
+  }
+  return a | (b << 16);
+}
+
+module.exports = adler32;
+
+},{}],3:[function(_dereq_,module,exports){
 'use strict'
 
 /**
@@ -50,7 +91,50 @@ ElementsPool.prototype.createElement = function(name) {
     return name == '#text' ? document.createTextNode('') : document.createElement(name)
 }
 
-},{}],3:[function(_dereq_,module,exports){
+},{}],4:[function(_dereq_,module,exports){
+'use strict'
+
+var adler32 = _dereq_('./adler32')
+
+/**
+ * Add hashes to every node.
+ * Hash is calculated using node name, text, attributes and child nodes.
+ *
+ * @param {Object} node
+ * @return {String} str which is used to generate a hash
+ * @api private
+ */
+module.exports = function hashify(node) {
+    var attr, i
+    var str = ''
+    var nodes
+
+    if (!node) return str
+
+    if (node.name) {
+        str += node.name
+        if (node.text) str += node.text
+
+        for (attr in node.attributes) {
+            str += attr + node.attributes[attr]
+        }
+
+        nodes = node.children
+    // Its a collection.
+    } else {
+        nodes = node
+    }
+
+    for (i in nodes) {
+        str += hashify(nodes[i])
+    }
+
+    node.hash = adler32(str)
+
+    return str
+}
+
+},{"./adler32":2}],5:[function(_dereq_,module,exports){
 'use strict'
 
 /**
@@ -82,7 +166,7 @@ module.exports = function(obj, path) {
     return obj
 }
 
-},{}],4:[function(_dereq_,module,exports){
+},{}],6:[function(_dereq_,module,exports){
 'use strict'
 
 var keypath = _dereq_('./keypath')
@@ -208,19 +292,33 @@ Modifier.prototype.children = function(change, prop) {
  */
 Modifier.prototype.attributes = function(change, prop) {
     var now = change.values.now
+    var path
+    var node
 
     if (change.change == 'add') {
-        var path = change.path.slice(0, change.path.length - 1)
-        var node = keypath(this.node.children, path)
-        node.setAttribute(prop, now)
+        if (prop == 'attributes') {
+            path = change.path.slice(0, change.path.length - 1)
+            node = keypath(this.node.children, path)
+            node.setAttributes(now)
+        } else {
+            path = change.path.slice(0, change.path.length - 2)
+            node = keypath(this.node.children, path)
+            node.setAttribute(prop, now)
+        }
     } else if (change.change == 'update') {
-        var path = change.path.slice(0, change.path.length - 2)
-        var node = keypath(this.node.children, path)
+        path = change.path.slice(0, change.path.length - 2)
+        node = keypath(this.node.children, path)
         node.setAttribute(prop, now)
     } else if (change.change == 'remove') {
-        var path = change.path.slice(0, change.path.length - 1)
-        var node = keypath(this.node.children, path)
-        for (prop in change.values.original) {
+        if (prop == 'attributes') {
+            path = change.path.slice(0, change.path.length - 1)
+            node = keypath(this.node.children, path)
+            for (prop in change.values.original) {
+                node.removeAttribute(prop)
+            }
+        } else {
+            path = change.path.slice(0, change.path.length - 2)
+            node = keypath(this.node.children, path)
             node.removeAttribute(prop)
         }
     }
@@ -250,7 +348,7 @@ Modifier.prototype.name = function(change, prop) {
     }
 }
 
-},{"./keypath":3,"./node":5}],5:[function(_dereq_,module,exports){
+},{"./keypath":5,"./node":7}],7:[function(_dereq_,module,exports){
 'use strict'
 
 var ElementsPool = _dereq_('./elements-pool')
@@ -263,11 +361,11 @@ var pool = new ElementsPool()
  * Abstract node which can be rendered to a dom node.
  *
  * @param {Object} options
- * @param {String} options.name
- * @param {String} [options.text]
- * @param {Object} [options.attributes]
+ * @param {String} options.name tag name
+ * @param {String} [options.text] text for the text node
+ * @param {Object} [options.attributes] key value hash of name/values
  * @param {Element} [options.element] if element is passed, node is already rendered
- * @param {Object} [options.children]
+ * @param {Object} [options.children] NodeList like collection
  * @param {Node} [parent]
  * @api private
  */
@@ -519,6 +617,18 @@ Node.prototype.append = function(node) {
 }
 
 /**
+ * Set nodes attributes.
+ *
+ * @param {Object} attribtues
+ * @api private
+ */
+Node.prototype.setAttributes = function(attributes) {
+    for (var name in attributes) {
+        this.setAttribute(name, attributes[name])
+    }
+}
+
+/**
  * Set nodes attribute.
  *
  * @param {String} name
@@ -527,7 +637,7 @@ Node.prototype.append = function(node) {
  */
 Node.prototype.setAttribute = function(name, value) {
     if (this.attributes && this.attributes[name] == value) return
-    var attributes = {}
+    var attributes = this.dirty && this.dirty.attributes ? this.dirty.attributes : {}
     attributes[name] = value
     this.setDirty('attributes', attributes)
 }
@@ -580,7 +690,7 @@ Node.prototype.setDirty = function(name, value) {
     this.dirty[name] = value || true
 }
 
-},{"./elements-pool":2,"./render-queue":6}],6:[function(_dereq_,module,exports){
+},{"./elements-pool":3,"./render-queue":8}],8:[function(_dereq_,module,exports){
 'use strict'
 
 /**
@@ -612,7 +722,7 @@ queue.empty = function() {
 }
 
 
-},{}],7:[function(_dereq_,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 'use strict'
 
 var docdiff = _dereq_('docdiff')
@@ -622,6 +732,7 @@ var Modifier = _dereq_('./modifier')
 var serializeDom = _dereq_('./serialize-dom')
 var serializeHtml = _dereq_('./serialize-html')
 var renderQueue = _dereq_('./render-queue')
+var hashify = _dereq_('./hashify')
 
 /**
  * Renderer constructor.
@@ -643,6 +754,7 @@ Renderer.serializeDom = serializeDom
 Renderer.serializeHtml = serializeHtml
 Renderer.keypath = keypath
 Renderer.docdiff = docdiff
+Renderer.hashify = hashify
 
 /**
  * Start checking render queue and render.
@@ -722,7 +834,7 @@ Renderer.prototype.update = function(html) {
     return this
 }
 
-},{"./keypath":3,"./modifier":4,"./node":5,"./render-queue":6,"./serialize-dom":8,"./serialize-html":9,"docdiff":11}],8:[function(_dereq_,module,exports){
+},{"./hashify":4,"./keypath":5,"./modifier":6,"./node":7,"./render-queue":8,"./serialize-dom":10,"./serialize-html":11,"docdiff":13}],10:[function(_dereq_,module,exports){
 'use strict'
 
 /**
@@ -764,7 +876,7 @@ module.exports = function serialize(element) {
     return json
 }
 
-},{}],9:[function(_dereq_,module,exports){
+},{}],11:[function(_dereq_,module,exports){
 'use strict'
 
 /**
@@ -904,7 +1016,7 @@ module.exports = function serialize(str, parent) {
     return parent
 }
 
-},{}],10:[function(_dereq_,module,exports){
+},{}],12:[function(_dereq_,module,exports){
 
 var utils = _dereq_('./utils');
 
@@ -974,7 +1086,7 @@ module.exports = function (original, now) {
 
   return diff;
 };
-},{"./utils":12}],11:[function(_dereq_,module,exports){
+},{"./utils":14}],13:[function(_dereq_,module,exports){
 
 var arraydiff = _dereq_('./arraydiff');
 var utils = _dereq_('./utils');
@@ -1063,7 +1175,7 @@ function Change (path, key, change, type, now, original, added, removed) {
   }
 }
 
-},{"./arraydiff":10,"./utils":12}],12:[function(_dereq_,module,exports){
+},{"./arraydiff":12,"./utils":14}],14:[function(_dereq_,module,exports){
 
 /**
  * isObject
