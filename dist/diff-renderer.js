@@ -89,7 +89,7 @@ var keypath = _dereq_('./keypath')
 var Node = _dereq_('./node')
 
 /**
- * Modifier applies the diff to the node.
+ * Modifier applies changes to the node.
  *
  * @param {Node} node
  * @api private
@@ -209,7 +209,11 @@ Modifier.prototype.children = function(change, prop) {
 Modifier.prototype.attributes = function(change, prop) {
     var now = change.values.now
 
-    if (change.change == 'update' || change.change == 'add') {
+    if (change.change == 'add') {
+        var path = change.path.slice(0, change.path.length - 1)
+        var node = keypath(this.node.children, path)
+        node.setAttribute(prop, now)
+    } else if (change.change == 'update') {
         var path = change.path.slice(0, change.path.length - 2)
         var node = keypath(this.node.children, path)
         node.setAttribute(prop, now)
@@ -305,14 +309,14 @@ module.exports = Node
  * @return {Object}
  * @api private
  */
-Node.prototype.toJson = function() {
+Node.prototype.toJSON = function() {
     var json = {name: this.name}
     if (this.text) json.text = this.text
     if (this.attributes) json.attributes = this.attributes
     if (this.children) {
         json.children = {length: this.children.length}
         for (var i = 0; i < this.children.length; i++) {
-            json.children[i] = this.children[i].toJson()
+            json.children[i] = this.children[i].toJSON()
         }
     }
 
@@ -348,11 +352,13 @@ Node.prototype.render = function() {
                     this.target.insertBefore(child.target, next && next.target)
                     newChildren.push(child)
                 }
+            } else {
+                newChildren.push(child)
             }
         }
         // We migrate children to the new array because some of them might be removed
         // and if we splice them directly, we will remove wrong elements.
-        this.children = newChildren
+        if (newChildren) this.children = newChildren
     }
 
     // Handle textContent.
@@ -367,6 +373,7 @@ Node.prototype.render = function() {
                 delete this.attributes[attrName]
                 this.target.removeAttribute(attrName)
             } else {
+                if (!this.attributes) this.attributes = {}
                 this.attributes[attrName] = value
                 this.target.setAttribute(attrName, value)
             }
@@ -413,6 +420,7 @@ Node.prototype.migrate = function() {
     if (this.name == '#text') {
         this.children = null
     } else {
+        this.text = null
         while (oldTarget.hasChildNodes()) {
             this.target.appendChild(oldTarget.removeChild(oldTarget.firstChild))
         }
@@ -464,6 +472,7 @@ Node.prototype.removeChildren = function() {
  */
 Node.prototype.removeChild = function(child) {
     child.setDirty('remove')
+    this.setDirty('children')
 }
 
 /**
@@ -539,7 +548,7 @@ Node.prototype.removeAttribute = function(name) {
  * @api private
  */
 Node.prototype.setText = function(text) {
-    if (text == this.text) return
+    if (this.name != '#text' || text == this.text) return
     this.setDirty('text')
     this.text = text
 }
@@ -706,7 +715,7 @@ Renderer.prototype.update = function(html) {
         this.node.removeChildren()
         return this
     }
-    var current = this.node.toJson().children || {}
+    var current = this.node.toJSON().children || {}
     var changes = docdiff(current, next)
     this.modifier.apply(changes)
 
@@ -769,7 +778,6 @@ module.exports = function serialize(element) {
  * @api private
  */
 module.exports = function serialize(str, parent) {
-    str = str.trim()
     if (!parent) parent = {name: 'root'}
     if (!str) return parent
 
