@@ -7,6 +7,9 @@ test('remove text node')
 test('change text node within a div')
 test('remove text node within a div')
 
+test('replace multiple divs by 1 other div')
+test('replace multiple divs by 1 text node')
+
 test('append div')
 test('append text node')
 test('prepend div')

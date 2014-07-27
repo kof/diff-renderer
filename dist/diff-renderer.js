@@ -186,18 +186,15 @@ Modifier.prototype.children = function(change, prop) {
             }
         }
     } else if (change.change == 'remove') {
-        path = change.path
-        node = keypath(this.node.children, path)
         // Remove all children.
         if (prop == 'children') {
-            // In case of migration to text, children are not migrated.
-            if (node) {
-                for (var i = 0; i < node.length; i++) {
-                    node[i].remove()
-                }
-            }
+            path = change.path.slice(0, change.path.length - 1)
+            node = keypath(this.node.children, path)
+            node.removeChildren()
         } else {
-            node.remove()
+            path = change.path
+            node = keypath(this.node.children, path)
+            if (node) node.parent.removeChild(node)
         }
     }
 }
@@ -241,7 +238,7 @@ Modifier.prototype.name = function(change, prop) {
     if (now == '#text') {
         var position = path[path.length - 1]
         var parent = node.parent
-        node.remove()
+        parent.removeChild(node)
         node = new Node({name: now}, parent)
         parent.insertAt(position, node)
     } else {
@@ -253,7 +250,7 @@ Modifier.prototype.name = function(change, prop) {
 'use strict'
 
 var ElementsPool = _dereq_('./elements-pool')
-var renderQueue = _dereq_('./render-queue')
+var queue = _dereq_('./render-queue')
 
 // Global elements pool for all nodes and all renderer instances.
 var pool = new ElementsPool()
@@ -278,23 +275,25 @@ function Node(options, parent) {
     this.parent = parent
 
     // Not dirty if element passed.
-    if (options.element) {
-        this.dirty = null
-    } else {
+    if (!options.element) {
         this.dirty = {
-            insert: true,
             text: true,
             attributes: true,
-            name: true
+            name: true,
+            remove: false
         }
     }
 
     if (options.children) {
         this.children = []
         for (var i in options.children) {
-            if (i != 'length') this.children[i] = new Node(options.children[i], this)
+            if (i != 'length') {
+                this.children[i] = new Node(options.children[i], this)
+                if (this.children[i].dirty && (!this.dirty || !this.dirty.children)) {
+                    this.setDirty('children')
+                }
+            }
         }
-        if (this.dirty) this.dirty.children = true
     }
 }
 
@@ -321,7 +320,7 @@ Node.prototype.toJson = function() {
 }
 
 /**
- * Allocate, setup and attach dom element.
+ * Allocate, setup current target, insert children to the dom.
  *
  * @api private
  */
@@ -333,16 +332,27 @@ Node.prototype.render = function() {
         else this.target = pool.allocate(this.name)
     }
 
-    // Handle insert.
-    if (this.dirty.insert && this.children) {
+    // Handle children
+    if (this.dirty.children && this.children) {
+        var newChildren = []
         for (var i = 0; i < this.children.length; i++) {
             var child = this.children[i]
+            // Children can be dirty for removal or for insertions only.
+            // All other changes are handled by the child.render.
             if (child.dirty) {
-                child.render()
-                var next = this.children[i + 1]
-                this.target.insertBefore(child.target, next && next.target)
+                if (child.dirty.remove) {
+                    this.removeChildAt(i)
+                } else {
+                    child.render()
+                    var next = this.children[i + 1]
+                    this.target.insertBefore(child.target, next && next.target)
+                    newChildren.push(child)
+                }
             }
         }
+        // We migrate children to the new array because some of them might be removed
+        // and if we splice them directly, we will remove wrong elements.
+        this.children = newChildren
     }
 
     // Handle textContent.
@@ -363,36 +373,32 @@ Node.prototype.render = function() {
         }
     }
 
-    this.dirty = null
+    // Don't reset dirty if node will be removed.
+    // It will be done later by its parent.
+    if (!this.dirty.remove) this.dirty = null
 }
 
 /**
- * Remove a dom node and cleanup.
+ * Remove child DOM element at passed position without removing from children array.
  *
- * @param {Node} node
- * @return {Node}
+ * @param {Number} position
  * @api private
  */
-Node.prototype.remove = function() {
-    this.detach()
-    this.cleanup()
-
-    // Remove children.
-    if (this.children) {
-        for (var i = 0; i < this.children.length; i++) {
-            this.children[i].remove()
+Node.prototype.removeChildAt = function(position) {
+    var child = this.children[position]
+    child.detach()
+    child.cleanup()
+    if (child.children) {
+        for (var i = 0; i < child.children.length; i++) {
+            child.removeChildAt(i)
         }
-
-        // Avoid calling .unlink on children again later.
-        this.children = null
     }
-
-    pool.deallocate(this.target)
-    this.unlink()
+    pool.deallocate(child.target)
+    child.unlink()
 }
 
 /**
- * Migrate current target and its children to a new element.
+ * Migrate target DOM element and its children to a new DOM element.
  * F.e. because tagName changed.
  *
  * @api private
@@ -415,7 +421,7 @@ Node.prototype.migrate = function() {
 }
 
 /**
- * Remove target from the render tree.
+ * Remove target DOM element from the render tree.
  *
  * @api private
  */
@@ -424,7 +430,7 @@ Node.prototype.detach = function() {
 }
 
 /**
- * Clean up everything changed on current target.
+ * Clean up everything changed on the target DOM element.
  *
  * @api private
  */
@@ -436,7 +442,32 @@ Node.prototype.cleanup = function() {
 }
 
 /**
- * Clean up all references for better garbage collection.
+ * Set all child nodes set dirty for removal.
+ *
+ * @api private
+ */
+Node.prototype.removeChildren = function() {
+    if (!this.children) return
+
+    for (var i = 0; i < this.children.length; i++) {
+        this.children[i].setDirty('remove')
+    }
+
+    this.setDirty('children')
+}
+
+/**
+ * Set child element as dirty for removal.
+ *
+ * @param {Node} node
+ * @api private
+ */
+Node.prototype.removeChild = function(child) {
+    child.setDirty('remove')
+}
+
+/**
+ * Clean up all references for current and child nodes.
  *
  * @api private
  */
@@ -445,11 +476,6 @@ Node.prototype.unlink = function() {
         for (var i = 0; i < this.children.length; i++) {
             this.children[i].unlink()
         }
-    }
-    // Remove this node from the children list of its parent.
-    if (this.parent && this.parent.children) {
-        var position = this.parent.children.indexOf(this)
-        if (position >= 0) this.parent.children.splice(position, 1)
     }
     this.name = null
     this.text = null
@@ -467,11 +493,9 @@ Node.prototype.unlink = function() {
  * @api private
  */
 Node.prototype.insertAt = function(position, node) {
-    if (!this.dirty) this.dirty = {}
-    this.dirty.insert = true
+    this.setDirty('children')
     if (!this.children) this.children = []
     this.children.splice(position, 0, node)
-    renderQueue.enqueue(this)
 }
 
 /**
@@ -494,10 +518,9 @@ Node.prototype.append = function(node) {
  */
 Node.prototype.setAttribute = function(name, value) {
     if (this.attributes && this.attributes[name] == value) return
-    if (!this.dirty) this.dirty = {attributes: {}}
-    if (!this.dirty.attributes) this.dirty.attributes = {}
-    this.dirty.attributes[name] = value
-    renderQueue.enqueue(this)
+    var attributes = {}
+    attributes[name] = value
+    this.setDirty('attributes', attributes)
 }
 
 /**
@@ -517,10 +540,8 @@ Node.prototype.removeAttribute = function(name) {
  */
 Node.prototype.setText = function(text) {
     if (text == this.text) return
-    if (!this.dirty) this.dirty = {}
-    this.dirty.text = true
+    this.setDirty('text')
     this.text = text
-    renderQueue.enqueue(this)
 }
 
 /**
@@ -531,10 +552,23 @@ Node.prototype.setText = function(text) {
  */
 Node.prototype.setName = function(name) {
     if (name == this.name) return
-    if (!this.dirty) this.dirty = {}
-    this.dirty.name = true
+    this.setDirty('name')
     this.name = name
-    renderQueue.enqueue(this)
+}
+
+/**
+ * Set some dirty flag, add to render queue.
+ *
+ * @param {String} name
+ * @param {Mixed} [value]
+ * @api private
+ */
+Node.prototype.setDirty = function(name, value) {
+    if (!this.dirty) {
+        this.dirty = {}
+        queue.enqueue(this)
+    }
+    this.dirty[name] = value || true
 }
 
 },{"./elements-pool":2,"./render-queue":6}],6:[function(_dereq_,module,exports){
@@ -666,8 +700,13 @@ Renderer.prototype.refresh = function(element) {
  * @api public
  */
 Renderer.prototype.update = function(html) {
-    var current = this.node.toJson().children || {}
     var next = serializeHtml(html).children
+    // Everything has been removed.
+    if (!next) {
+        this.node.removeChildren()
+        return this
+    }
+    var current = this.node.toJson().children || {}
     var changes = docdiff(current, next)
     this.modifier.apply(changes)
 
