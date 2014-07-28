@@ -71,8 +71,8 @@ Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see i
 Create a renderer instance. Pass DOM element which you don't want to modify by DiffRenderer. Think of main view element f.e. like Backbone.View.prototype.el.
 
 ```javascript
-    var el = document.getElementById('my-view')
-    var renderer = new DiffRenderer(el)
+var el = document.getElementById('my-view')
+var renderer = new DiffRenderer(el)
 ```
 
 ### DiffRenderer#update(html)
@@ -80,7 +80,7 @@ Create a renderer instance. Pass DOM element which you don't want to modify by D
 Update renderer state with the new html.
 
 ```javascript
-    renderer.update('<div>My new html</div>')
+renderer.update('<div>My new html</div>')
 ```
 
 ### DiffRenderer#refresh()
@@ -88,29 +88,28 @@ Update renderer state with the new html.
 Serialize dom elements within renderer main element. You might need this if you modified the dom directly.
 
 ```javascript
-    var el = document.getElementById('my-view')
-    var renderer = new DiffRenderer(el)
-    renderer.update('<div>My new html</div>')
+var el = document.getElementById('my-view')
+var renderer = new DiffRenderer(el)
+renderer.update('<div>My new html</div>')
 
-    // Now me or some other library modifies the content (NOT RECOMMENDED)
-    el.innerHTML = '<span>Test</span>'
+// Now me or some other library modifies the content (NOT RECOMMENDED)
+el.innerHTML = '<span>Test</span>'
 
-    // Now you want renderer let know that content has changed.
-    renderer.refresh()
+// Now you want renderer let know that content has changed.
+renderer.refresh()
 ```
-
 
 ### DiffRenderer.start()
 
 Start the renderer loop. Now on each animation frame renderer will render all queued changes.
 
 ```javascript
-    DiffRenderer.start()
+DiffRenderer.start()
 
-    var el = document.getElementById('my-view')
-    var renderer = new Renderer(el)
+var el = document.getElementById('my-view')
+var renderer = new Renderer(el)
 
-    renderer.update('My fresh content will be rendered in the next animation frame.')
+renderer.update('My fresh content will be rendered in the next animation frame.')
 ```
 
 ### DiffRenderer.stop()
@@ -122,13 +121,13 @@ Stop render loop.
 Render all queued changes from all renderer instances to the DOM. In the most cases you want to use `Renderer.start` instead.
 
 ```javascript
-    var el1 = document.getElementById('my-view-1')
-    var renderer1 = new Renderer(el1)
-    var el2 = document.getElementById('my-view-2')
-    var renderer2 = new Renderer(el2)
+var el1 = document.getElementById('my-view-1')
+var renderer1 = new Renderer(el1)
+var el2 = document.getElementById('my-view-2')
+var renderer2 = new Renderer(el2)
 
-    // Now all virtual changes will be applied to the DOM.
-    DiffRenderer.render()
+// Now all virtual changes will be applied to the DOM.
+DiffRenderer.render()
 ```
 
 ## Test
