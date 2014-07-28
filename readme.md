@@ -119,6 +119,7 @@ Stop render loop.
 
 ### DiffRenderer.render()
 
+Render all queued changes from all renderer instances to the DOM. In the most cases you want to use `Renderer.start` instead.
 
 ```javascript
     var el1 = document.getElementById('my-view-1')
