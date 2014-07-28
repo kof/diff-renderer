@@ -61,5 +61,4 @@ Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see i
 
 ## Test
 
-    npm i
-    make test
+- [Open in browser the suite](./test/index.html)
