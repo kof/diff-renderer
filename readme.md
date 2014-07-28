@@ -60,5 +60,5 @@ Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see i
 - Use [requestAnimationFrame shim](https://github.com/kof/animation-frame) for older browsers.
 
 ## Test
-
-[Open in browser the suite](./test/index.html)
+- `make build`
+- Open the test suite ./test/index.html

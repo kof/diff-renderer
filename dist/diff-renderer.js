@@ -840,8 +840,8 @@ Renderer.prototype.update = function(html) {
         return this
     }
     var current = this.node.toJSON().children || {}
-    var changes = docdiff(current, next)
-    this.modifier.apply(changes)
+    var diff = docdiff(current, next)
+    this.modifier.apply(diff)
 
     return this
 }
