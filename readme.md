@@ -21,6 +21,10 @@ Projects like [react](https://github.com/facebook/react/) were born.
 
 React is great. It solves lots of our problems, but the price is high. It comes at a price of "no compatibility" to all the things we have build in the last decade.
 
+## Playground
+
+Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see it in action.
+
 ## Use cases
 
 1. Replacement for jQuery's dom manipulation methods and any direct dom manipulation.
@@ -40,10 +44,6 @@ React is great. It solves lots of our problems, but the price is high. It comes 
 
 1. Don't attach listeners to the elements within renderer container. Do event delegation.
 1. Don't change elements directly, use DiffRenderer. If you (or some lib) changed an element directly - refresh DiffRenderer.
-
-## Playground
-
-Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see it in action.
 
 ## Bench
 
