@@ -61,4 +61,4 @@ Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see i
 
 ## Test
 
-- [Open in browser the suite](./test/index.html)
+[Open in browser the suite](//kof.github.com/diff-renderer/test/index.html)
