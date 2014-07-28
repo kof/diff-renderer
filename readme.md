@@ -21,6 +21,10 @@ Projects like [react](https://github.com/facebook/react/) were born.
 
 React is great. It solves lots of our problems, but the price is high. It comes at a price of "no compatibility" to all the things we have build in the last decade.
 
+## Playground
+
+Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see it in action.
+
 ## Use cases
 
 1. Replacement for jQuery's dom manipulation methods and any direct dom manipulation.
@@ -41,10 +45,6 @@ React is great. It solves lots of our problems, but the price is high. It comes 
 1. Don't attach listeners to the elements within renderer container. Do event delegation.
 1. Don't change elements directly, use DiffRenderer. If you (or some lib) changed an element directly - refresh DiffRenderer.
 
-## Playground
-
-Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see it in action.
-
 ## Bench
 
 - html parser - 200kb of html parsed in 15ms to json on my mb air.
@@ -58,6 +58,77 @@ Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see i
 ## Api
 
 - Use [requestAnimationFrame shim](https://github.com/kof/animation-frame) for older browsers.
+
+### Get the api
+
+1. Commonjs `var DiffRenderer = require('diff-renderer')`
+2. From global
+    - add script with browserified version from ./dist/diff-renderer.js
+    - var DiffRenderer = window.DiffRenderer
+
+### DiffRenderer(element)
+
+Create a renderer instance. Pass DOM element which you don't want to modify by DiffRenderer. Think of main view element f.e. like Backbone.View.prototype.el.
+
+```javascript
+var el = document.getElementById('my-view')
+var renderer = new DiffRenderer(el)
+```
+
+### DiffRenderer#update(html)
+
+Update renderer state with the new html.
+
+```javascript
+renderer.update('<div>My new html</div>')
+```
+
+### DiffRenderer#refresh()
+
+Serialize dom elements within renderer main element. You might need this if you modified the dom directly.
+
+```javascript
+var el = document.getElementById('my-view')
+var renderer = new DiffRenderer(el)
+renderer.update('<div>My new html</div>')
+
+// Now me or some other library modifies the content (NOT RECOMMENDED)
+el.innerHTML = '<span>Test</span>'
+
+// Now you want renderer let know that content has changed.
+renderer.refresh()
+```
+
+### DiffRenderer.start()
+
+Start the renderer loop. Now on each animation frame renderer will render all queued changes.
+
+```javascript
+DiffRenderer.start()
+
+var el = document.getElementById('my-view')
+var renderer = new Renderer(el)
+
+renderer.update('My fresh content will be rendered in the next animation frame.')
+```
+
+### DiffRenderer.stop()
+
+Stop render loop.
+
+### DiffRenderer.render()
+
+Render all queued changes from all renderer instances to the DOM. In the most cases you want to use `Renderer.start` instead.
+
+```javascript
+var el1 = document.getElementById('my-view-1')
+var renderer1 = new Renderer(el1)
+var el2 = document.getElementById('my-view-2')
+var renderer2 = new Renderer(el2)
+
+// Now all virtual changes will be applied to the DOM.
+DiffRenderer.render()
+```
 
 ## Test
 - `make build`
