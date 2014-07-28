@@ -1,34 +1,34 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
+    <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Diff-renderer by kof</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+
+    <title>Diff-renderer by kof</title>
   </head>
+
   <body>
-    <div class="wrapper">
-      <header>
+    <header>
+      <div class="inner">
         <h1>Diff-renderer</h1>
-        <p>Render diff to the dom.</p>
+        <h2>Render diff to the dom.</h2>
+        <a href="https://github.com/kof/diff-renderer" class="button"><small>View project on</small>GitHub</a>
+      </div>
+    </header>
 
-        <p class="view"><a href="https://github.com/kof/diff-renderer">View the Project on GitHub <small>kof/diff-renderer</small></a></p>
-
-
-        <ul>
-          <li><a href="https://github.com/kof/diff-renderer/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/kof/diff-renderer/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/kof/diff-renderer">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h2>
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h2>
 <a name="what-is-diffrenderer" class="anchor" href="#what-is-diffrenderer"><span class="octicon octicon-link"></span></a>What is DiffRenderer</h2>
 
 <p>DiffRenderer is a rendering component for your views, think of smart .innerHTML which renders the difference.</p>
@@ -54,6 +54,11 @@ jQuery has fixed inconsistencies for popular DOM methods and made our live easie
 <p>React is great. It solves lots of our problems, but the price is high. It comes at a price of "no compatibility" to all the things we have build in the last decade.</p>
 
 <h2>
+<a name="playground" class="anchor" href="#playground"><span class="octicon octicon-link"></span></a>Playground</h2>
+
+<p>Visit <a href="//kof.github.com/diff-renderer/demo/playground.html">playground</a> to see it in action.</p>
+
+<h2>
 <a name="use-cases" class="anchor" href="#use-cases"><span class="octicon octicon-link"></span></a>Use cases</h2>
 
 <ol>
@@ -77,11 +82,6 @@ Client sends an object to the server, server validates it, client gets cleaned o
 <li>Don't attach listeners to the elements within renderer container. Do event delegation.</li>
 <li>Don't change elements directly, use DiffRenderer. If you (or some lib) changed an element directly - refresh DiffRenderer.</li>
 </ol><h2>
-<a name="playground" class="anchor" href="#playground"><span class="octicon octicon-link"></span></a>Playground</h2>
-
-<p>Visit <a href="//kof.github.com/diff-renderer/demo/playground.html">playground</a> to see it in action.</p>
-
-<h2>
 <a name="bench" class="anchor" href="#bench"><span class="octicon octicon-link"></span></a>Bench</h2>
 
 <ul>
@@ -99,21 +99,111 @@ Client sends an object to the server, server validates it, client gets cleaned o
 
 <ul>
 <li>Use <a href="https://github.com/kof/animation-frame">requestAnimationFrame shim</a> for older browsers.</li>
-</ul><h2>
+</ul><h3>
+<a name="get-the-api" class="anchor" href="#get-the-api"><span class="octicon octicon-link"></span></a>Get the api</h3>
+
+<ol>
+<li>Commonjs <code>var DiffRenderer = require('diff-renderer')</code>
+</li>
+<li>From global
+
+<ul>
+<li>add script with browserified version from ./dist/diff-renderer.js</li>
+<li>var DiffRenderer = window.DiffRenderer</li>
+</ul>
+</li>
+</ol><h3>
+<a name="diffrendererelement" class="anchor" href="#diffrendererelement"><span class="octicon octicon-link"></span></a>DiffRenderer(element)</h3>
+
+<p>Create a renderer instance. Pass DOM element which you don't want to modify by DiffRenderer. Think of main view element f.e. like Backbone.View.prototype.el.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">el</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'my-view'</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">renderer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DiffRenderer</span><span class="p">(</span><span class="nx">el</span><span class="p">)</span>
+</pre></div>
+
+<h3>
+<a name="diffrendererupdatehtml" class="anchor" href="#diffrendererupdatehtml"><span class="octicon octicon-link"></span></a>DiffRenderer#update(html)</h3>
+
+<p>Update renderer state with the new html.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="nx">renderer</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span><span class="s1">'&lt;div&gt;My new html&lt;/div&gt;'</span><span class="p">)</span>
+</pre></div>
+
+<h3>
+<a name="diffrendererrefresh" class="anchor" href="#diffrendererrefresh"><span class="octicon octicon-link"></span></a>DiffRenderer#refresh()</h3>
+
+<p>Serialize dom elements within renderer main element. You might need this if you modified the dom directly.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">el</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'my-view'</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">renderer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DiffRenderer</span><span class="p">(</span><span class="nx">el</span><span class="p">)</span>
+<span class="nx">renderer</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span><span class="s1">'&lt;div&gt;My new html&lt;/div&gt;'</span><span class="p">)</span>
+
+<span class="c1">// Now me or some other library modifies the content (NOT RECOMMENDED)</span>
+<span class="nx">el</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'&lt;span&gt;Test&lt;/span&gt;'</span>
+
+<span class="c1">// Now you want renderer let know that content has changed.</span>
+<span class="nx">renderer</span><span class="p">.</span><span class="nx">refresh</span><span class="p">()</span>
+</pre></div>
+
+<h3>
+<a name="diffrendererstart" class="anchor" href="#diffrendererstart"><span class="octicon octicon-link"></span></a>DiffRenderer.start()</h3>
+
+<p>Start the renderer loop. Now on each animation frame renderer will render all queued changes.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="nx">DiffRenderer</span><span class="p">.</span><span class="nx">start</span><span class="p">()</span>
+
+<span class="kd">var</span> <span class="nx">el</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'my-view'</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">renderer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Renderer</span><span class="p">(</span><span class="nx">el</span><span class="p">)</span>
+
+<span class="nx">renderer</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span><span class="s1">'My fresh content will be rendered in the next animation frame.'</span><span class="p">)</span>
+</pre></div>
+
+<h3>
+<a name="diffrendererstop" class="anchor" href="#diffrendererstop"><span class="octicon octicon-link"></span></a>DiffRenderer.stop()</h3>
+
+<p>Stop render loop.</p>
+
+<h3>
+<a name="diffrendererrender" class="anchor" href="#diffrendererrender"><span class="octicon octicon-link"></span></a>DiffRenderer.render()</h3>
+
+<p>Render all queued changes from all renderer instances to the DOM. In the most cases you want to use <code>Renderer.start</code> instead.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">el1</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'my-view-1'</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">renderer1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Renderer</span><span class="p">(</span><span class="nx">el1</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">el2</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'my-view-2'</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">renderer2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Renderer</span><span class="p">(</span><span class="nx">el2</span><span class="p">)</span>
+
+<span class="c1">// Now all virtual changes will be applied to the DOM.</span>
+<span class="nx">DiffRenderer</span><span class="p">.</span><span class="nx">render</span><span class="p">()</span>
+</pre></div>
+
+<h2>
 <a name="test" class="anchor" href="#test"><span class="octicon octicon-link"></span></a>Test</h2>
 
 <ul>
 <li><code>make build</code></li>
 <li>Open the test suite ./test/index.html</li>
 </ul>
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/kof">kof</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/kof/diff-renderer/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/kof/diff-renderer/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/kof/diff-renderer"></a> is maintained by <a href="https://github.com/kof">kof</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
-              <script type="text/javascript">
+
+            <script type="text/javascript">
             var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
             document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
           </script>
