@@ -98,9 +98,16 @@ test('change text node text', function() {
 
 test('change text node text within a tag', function() {
     var view = getView()
-    view.render('<a>abc</a>')
+    view.render('<a>aaa</a>')
     view.render('<a>a</a>')
     equal(view.element.innerHTML, '<a>a</a>')
+})
+
+test('replace tag by another tag', function() {
+    var view = getView()
+    view.render('<a/>')
+    view.render('<b/>')
+    equal(view.element.innerHTML, '<b></b>')
 })
 
 test('replace multiple tags by 1 other tag', function() {
@@ -170,7 +177,7 @@ test('prepend a tag', function() {
     var view = getView()
     view.render('<a/>')
     view.render('<b/><a/>')
-    equal(view.element.innerHTML, '<b><b/><a></a>')
+    equal(view.element.innerHTML, '<b></b><a></a>')
 })
 
 test('prepend a text node', function() {
@@ -204,7 +211,7 @@ test('remove text node', function() {
 test('remove first tag', function() {
     var view = getView()
     view.render('<a/><b/><c/>')
-    view.render('<b/>')
+    view.render('<b/><c/>')
     equal(view.element.innerHTML, '<b></b><c></c>')
 })
 
