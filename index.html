@@ -29,34 +29,53 @@
       </header>
       <section>
         <h2>
+<a name="what-is-diffrenderer" class="anchor" href="#what-is-diffrenderer"><span class="octicon octicon-link"></span></a>What is DiffRenderer</h2>
+
+<p>DiffRenderer is a rendering component for your views, think of smart .innerHTML which renders the difference.</p>
+
+<p>DiffRenderer is here to solve 1 issue - rendering of data changes to the DOM at 60fps.</p>
+
+<p>DiffRenderer is designed in first place to play nicely with any library and web components.</p>
+
+<p>DiffRenderer will dramatically simplify your view logic in non-trivial tasks.</p>
+
+<p>Feel free to use any other project for events handling, templates, animations etc.</p>
+
+<h2>
 <a name="why" class="anchor" href="#why"><span class="octicon octicon-link"></span></a>Why</h2>
 
 <p>DOM is slow. It has always been slow. There is no hope this will change in the near future.</p>
 
 <p>We want to display the changes of our state or data without thinking about "how to render".
-jQuery has fixed inconsistencies for popular DOM methods. This made our live easier for years. In the meantime requirements on web applications grew up. Complex application logic and push notifications led us to the need of bidirectional bindings between UI and data.</p>
+jQuery has fixed inconsistencies for popular DOM methods and made our live easier for years. In the meantime requirements on web applications grew up. Complex application logic and push notifications led us to the need of bidirectional bindings between UI and data.</p>
 
 <p>Projects like <a href="https://github.com/facebook/react/">react</a> were born.</p>
 
 <p>React is great. It solves lots of our problems, but the price is high. It comes at a price of "no compatibility" to all the things we have build in the last decade.</p>
 
 <h2>
-<a name="goal" class="anchor" href="#goal"><span class="octicon octicon-link"></span></a>Goal</h2>
+<a name="use-cases" class="anchor" href="#use-cases"><span class="octicon octicon-link"></span></a>Use cases</h2>
 
-<p>diff-renderer is here to solve 1 issue - rendering of data changes to the DOM at 60fps.</p>
-
-<p>Events handling, template engines or animations are NOT part of this project.</p>
-
-<h2>
+<ol>
+<li>Replacement for jQuery's dom manipulation methods and any direct dom manipulation.</li>
+<li>Easy RESTful http API implementation:
+Client sends an object to the server, server validates it, client gets cleaned object back. With DiffRenderer we can apply the new one to the DOM without any checks.</li>
+<li>Full bidirectional binding. For this you need to add the part for handling events and changing the state/data objects manually.</li>
+<li>Real time data manipulation / rendering.</li>
+</ol><h2>
 <a name="how" class="anchor" href="#how"><span class="octicon octicon-link"></span></a>How</h2>
 
 <ol>
-<li>By accepting the DOM as a render api, not something we can change all the time.</li>
-<li>Accepts a snapshot of your state represented as html or json. You can use any template engine or none.</li>
-<li>Calculates the difference to the state in the dom.</li>
-<li>Intelligently renders the difference by only modifying/adding/removing nodes we have to.</li>
-<li>Maintains a pool of DOM nodes and reuses them.</li>
-<li>Benchmark driven development</li>
+<li>It accepts a snapshot of your state in html or json format. You can use any template engine or none.</li>
+<li>It calculates the difference to the cached state of the dom.</li>
+<li>Intelligently renders the difference by only modifying/adding/removing nodes it has to.</li>
+<li>It reuses DOM elements.</li>
+</ol><h2>
+<a name="gotchas" class="anchor" href="#gotchas"><span class="octicon octicon-link"></span></a>Gotchas</h2>
+
+<ol>
+<li>Don't attach listeners to the elements within renderer container. Do event delegation.</li>
+<li>Don't change elements directly, use DiffRenderer. If you (or some lib) changed an element directly - refresh DiffRenderer.</li>
 </ol><h2>
 <a name="playground" class="anchor" href="#playground"><span class="octicon octicon-link"></span></a>Playground</h2>
 
@@ -72,15 +91,21 @@ jQuery has fixed inconsistencies for popular DOM methods. This made our live eas
 </code></pre>
 
 <ul>
-<li>jsperf of html parser vs. all the dom parsers <a href="http://jsperf.com/domparser-vs-jsparser">http://jsperf.com/domparser-vs-jsparser</a>
+<li>jsperf of html parser vs. dom parsers <a href="http://jsperf.com/domparser-vs-jsparser">http://jsperf.com/domparser-vs-jsparser</a>
 </li>
-<li>html parser manual memory bench: open ./test/memory.html , observe your engines memory, click lots of times on buttons and see what happens</li>
+<li>manual html parser memory test: open ./test/memory.html, observe your engines memory, click some times on buttons and see what happens</li>
+</ul><h2>
+<a name="api" class="anchor" href="#api"><span class="octicon octicon-link"></span></a>Api</h2>
+
+<ul>
+<li>Use <a href="https://github.com/kof/animation-frame">requestAnimationFrame shim</a> for older browsers.</li>
 </ul><h2>
 <a name="test" class="anchor" href="#test"><span class="octicon octicon-link"></span></a>Test</h2>
 
-<pre><code>npm i
-make test
-</code></pre>
+<ul>
+<li><code>make build</code></li>
+<li>Open the test suite ./test/index.html</li>
+</ul>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/kof">kof</a></p>
