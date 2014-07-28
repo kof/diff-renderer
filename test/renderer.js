@@ -189,9 +189,9 @@ test('prepend multiple tags', function() {
 
 test('prepend a text node', function() {
     var view = getView()
-    view.render('<a/>')
-    view.render('b<a/>')
-    equal(view.element.innerHTML, 'b<a></a>')
+    view.render('<a c="b"/>')
+    view.render('b<a c="b"/>')
+    equal(view.element.innerHTML, 'b<a c="b"></a>')
 })
 
 test('insert a tag after', function() {
