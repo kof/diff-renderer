@@ -1,3 +1,8 @@
+var serializeHtml = DiffRenderer.serializeHtml
+var hashify = DiffRenderer.hashify
+
+QUnit.module('serialize-html')
+
 test('text node 0', function() {
     var doc = serializeHtml('a')
     var node = doc.children[0]
