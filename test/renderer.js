@@ -180,11 +180,39 @@ test('prepend a tag', function() {
     equal(view.element.innerHTML, '<b></b><a></a>')
 })
 
+test('prepend multiple tags', function() {
+    var view = getView()
+    view.render('<a/>')
+    view.render('<d/><c/><b/><a/>')
+    equal(view.element.innerHTML, '<d></d><c></c><b></b><a></a>')
+})
+
 test('prepend a text node', function() {
     var view = getView()
     view.render('<a/>')
     view.render('b<a/>')
     equal(view.element.innerHTML, 'b<a></a>')
+})
+
+test('insert a tag after', function() {
+    var view = getView()
+    view.render('<a/>')
+    view.render('<a/><b/>')
+    equal(view.element.innerHTML, '<a></a><b></b>')
+})
+
+test('insert multiple tags after', function() {
+    var view = getView()
+    view.render('<a/>')
+    view.render('<a/><b/><c/><d/>')
+    equal(view.element.innerHTML, '<a></a><b></b><c></c><d></d>')
+})
+
+test('insert multiple tags in the middle', function() {
+    var view = getView()
+    view.render('<a/><b/>')
+    view.render('<a/><c/><d/><b/>')
+    equal(view.element.innerHTML, '<a></a><c></c><d></d><b></b>')
 })
 
 test('migrate children', function() {
@@ -220,6 +248,13 @@ test('remove middle tag', function() {
     view.render('<a/><b/><c/>')
     view.render('<a/><c/>')
     equal(view.element.innerHTML, '<a></a><c></c>')
+})
+
+test('remove last tag', function() {
+    var view = getView()
+    view.render('<a/><b/><c/>')
+    view.render('<a/><b/>')
+    equal(view.element.innerHTML, '<a></a><b></b>')
 })
 
 test('remove last tag', function() {
