@@ -70,10 +70,12 @@
                 var renderer = new DiffRenderer(resultEl)
 
                 function update() {
+                    var html = sourceEl.value
                     var start = Date.now()
-                    renderer.update(sourceEl.value)
+                    renderer.update(html)
                     DiffRenderer.render()
-                    renderTimeEl.textContent = Date.now() - start + 'ms'
+                    var time = Date.now() - start
+                    renderTimeEl.textContent = time + 'ms'
                 }
 
                 sourceEl.value = $('#initial')[0].innerHTML.trim()
