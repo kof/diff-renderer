@@ -1,25 +1,35 @@
-## What is DiffRenderer
+## Smart innerHTML for your views.
 
-DiffRenderer is a rendering component for your views, think of smart .innerHTML which renders the difference.
+DiffRenderer is a rendering component for your views, think of smart .innerHTML which renders only the changes.
 
-DiffRenderer is here to solve 1 issue - rendering of data changes to the DOM at 60fps.
-
-DiffRenderer is designed in first place to play nicely with any library and web components.
-
-DiffRenderer will dramatically simplify your view logic in non-trivial tasks.
+- high performance rendering
+- dramatically simplifies your view logic in non-trivial tasks
+- plays nicely with any library and web components
 
 Feel free to use any other project for events handling, templates, animations etc.
 
-## Why
+```javascript
 
-DOM is slow. It has always been slow. There is no hope this will change in the near future.
+var DiffRenderer = require('diff-renderer')
 
-We want to display the changes of our state or data without thinking about "how to render".
-jQuery has fixed inconsistencies for popular DOM methods and made our live easier for years. In the meantime requirements on web applications grew up. Complex application logic and push notifications led us to the need of bidirectional bindings between UI and data.
+var el = document.getElementById('my-view')
 
-Projects like [react](https://github.com/facebook/react/) were born.
+// Create renderer instance associated with some parent DOM element.
+var renderer = new DiffRenderer(el)
 
-React is great. It solves lots of our problems, but the price is high. It comes at a price of "no compatibility" to all the things we have build in the last decade.
+// Put html you want to render.
+renderer.update('<div>My content</div>')
+
+// Start rendering loop once.
+DiffRenderer.start()
+```
+
+## DOM is slow.
+
+If your view state has changed, you would normally manually go through changes and apply them to the dom by manipulating dom nodes or overwriting the view completely with .innerHTML.
+
+1. Manipulating dom nodes in non trivial applications makes you view logic complicated.
+2. Using .innerHTML causes performance and memory issues.
 
 ## Playground
 
@@ -38,7 +48,7 @@ Visit [playground](//kof.github.com/diff-renderer/demo/playground.html) to see i
 1. It accepts a snapshot of your state in html or json format. You can use any template engine or none.
 1. It calculates the difference to the cached state of the dom.
 1. Intelligently renders the difference by only modifying/adding/removing nodes it has to.
-1. It reuses DOM elements.
+1. It always reuses DOM elements.
 
 ## Gotchas
 
