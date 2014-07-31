@@ -263,3 +263,20 @@ test('remove last tag', function() {
     view.render('<a/><b/>')
     equal(view.element.innerHTML, '<a></a><b></b>')
 })
+
+test('allow nesting of renderers', function() {
+    var element1 = document.createElement('div')
+    element1.className = '1'
+    var element2 = document.createElement('div')
+    element2.className = '2'
+    var element3 = document.createElement('div')
+    element3.className = '3'
+    element1.appendChild(element2)
+    element2.appendChild(element3)
+
+    var renderer1 = new DiffRenderer(element1)
+    var renderer2 = new DiffRenderer(element2)
+
+    ok(renderer1.node.children[0] === renderer2.node)
+    ok(renderer1.node.children[0].children[0] === renderer2.node.children[0])
+})

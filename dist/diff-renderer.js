@@ -260,13 +260,13 @@ Modifier.prototype.children = function(change, prop) {
             } else {
                 node = this.node
             }
-            node.insertAt(prop, new Node(now, node))
+            node.insertAt(prop, Node.create(now, node))
         // Append children.
         } else {
             path = change.path.slice(0, change.path.length - 1)
             node = keypath(this.node.children, path)
             for (var key in now) {
-                if (!Modifier.EXCLUDE[key]) node.append(new Node(now[key], node))
+                if (!Modifier.EXCLUDE[key]) node.append(Node.create(now[key], node))
             }
         }
     } else if (change.change == 'remove') {
@@ -347,6 +347,12 @@ var queue = _dereq_('./render-queue')
 // Global elements pool for all nodes and all renderer instances.
 var pool = new ElementsPool()
 
+var counter = 0
+
+var nodesMap = {}
+
+var ID_NAMESPACE = '__diffRendererId__'
+
 /**
  * Abstract node which can be rendered to a dom node.
  *
@@ -360,14 +366,15 @@ var pool = new ElementsPool()
  * @api private
  */
 function Node(options, parent) {
+    this.id = counter++
     this.name = options.name
+    this.parent = parent
     if (options.text) this.text = options.text
     if (options.attributes) this.attributes = options.attributes
-    if (options.element) this.target = options.element
-    this.parent = parent
-
+    if (options.element) {
+        this.setTarget(options.element)
     // Not dirty if element passed.
-    if (!options.element) {
+    } else {
         this.dirty('name', true)
         if (this.text) this.dirty('text', true)
         if (this.attributes) this.dirty('attributes', this.attributes)
@@ -377,14 +384,30 @@ function Node(options, parent) {
         this.children = []
         for (var i in options.children) {
             if (i != 'length') {
-                this.children[i] = new Node(options.children[i], this)
+                this.children[i] = Node.create(options.children[i], this)
                 if (this.children[i].dirty()) this.dirty('children', true)
             }
         }
     }
+
+    nodesMap[this.id] = this
 }
 
 module.exports = Node
+
+/**
+ * Create Node instance, check if passed element has already a Node.
+ *
+ * @see {Node}
+ * @api private
+ * @return {Node}
+ */
+Node.create = function(options, parent) {
+    if (options.element && options.element[ID_NAMESPACE]) {
+        return nodesMap[options.element[ID_NAMESPACE]]
+    }
+    return new Node(options, parent)
+}
 
 /**
  * Serialize instance to json data.
@@ -415,7 +438,7 @@ Node.prototype.render = function() {
     if (!this._dirty) return
     if (this.dirty('name')) {
         if (this.target) this.migrate()
-        else this.target = pool.allocate(this.name)
+        else this.setTarget(pool.allocate(this.name))
         this.dirty('name', null)
     }
 
@@ -430,6 +453,7 @@ Node.prototype.render = function() {
                 if (child.dirty('remove')) {
                     this.removeChildAt(i)
                     child.dirty('remove', null)
+                    delete nodesMap[child.id]
                 // Handle insert.
                 } else {
                     var next = this.children[i + 1]
@@ -502,7 +526,7 @@ Node.prototype.migrate = function() {
     this.detach()
     this.cleanup()
     var oldTarget = this.target
-    this.target = pool.allocate(this.name)
+    this.setTarget(pool.allocate(this.name))
 
     // Migrate children.
     if (this.name == '#text') {
@@ -537,6 +561,7 @@ Node.prototype.cleanup = function() {
         for (var attrName in this.attributes) this.target.removeAttribute(attrName)
     }
     if (this.text) this.target.textContent = ''
+    delete this.target[ID_NAMESPACE]
 }
 
 /**
@@ -576,12 +601,14 @@ Node.prototype.unlink = function() {
             this.children[i].unlink()
         }
     }
-    this.name = null
-    this.text = null
-    this.attributes = null
-    this.parent = null
-    this.children = null
-    this.target = null
+    delete this.id
+    delete this.name
+    delete this.text
+    delete this.attributes
+    delete this.parent
+    delete this.children
+    delete this.target
+    delete this._dirty
 }
 
 /**
@@ -670,6 +697,17 @@ Node.prototype.setName = function(name) {
 }
 
 /**
+ * Set target element.
+ *
+ * @param {Element} element
+ * @api private
+ */
+Node.prototype.setTarget = function(element) {
+    element[ID_NAMESPACE] = this.id
+    this.target = element
+}
+
+/**
  * Get/set/unset a dirty flag, add to render queue.
  *
  * @param {String} name
@@ -689,7 +727,7 @@ Node.prototype.dirty = function(name, value) {
             // If if its not empty object - exist.
             for (name in this._dirty) return
             // For quick check.
-            this._dirty = null
+            delete this._dirty
         }
     // Set dirty flag.
     } else {
@@ -819,7 +857,7 @@ Renderer.prototype.refresh = function(element) {
     if (!element && this.node) element = this.node.target
     if (this.node) this.node.unlink()
     var json = serializeDom(element)
-    this.node = new Node(json)
+    this.node = Node.create(json)
     this.modifier = new Modifier(this.node)
 
     return this
