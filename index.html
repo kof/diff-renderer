@@ -5,22 +5,22 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
 
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-    <title>Diff-renderer by kof</title>
+    <title>DiffRenderer by kof</title>
   </head>
 
   <body>
     <header>
       <div class="inner">
-        <h1>Diff-renderer</h1>
-        <h2>Render diff to the dom.</h2>
+        <h1>DiffRenderer</h1>
+        <h2>Smart innerHTML for your views.</h2>
         <a href="https://github.com/kof/diff-renderer" class="button"><small>View project on</small>GitHub</a>
       </div>
     </header>
@@ -29,31 +29,40 @@
       <div class="inner clearfix">
         <section id="main-content">
           <h2>
-<a name="what-is-diffrenderer" class="anchor" href="#what-is-diffrenderer"><span class="octicon octicon-link"></span></a>What is DiffRenderer</h2>
+<a name="smart-innerhtml-for-your-views" class="anchor" href="#smart-innerhtml-for-your-views"><span class="octicon octicon-link"></span></a>Smart innerHTML for your views.</h2>
 
-<p>DiffRenderer is a rendering component for your views, think of smart .innerHTML which renders the difference.</p>
+<p>DiffRenderer is a rendering component for your views, think of smart .innerHTML which renders only the changes.</p>
 
-<p>DiffRenderer is here to solve 1 issue - rendering of data changes to the DOM at 60fps.</p>
+<ul>
+<li>high performance rendering</li>
+<li>dramatically simplifies your view logic in non-trivial tasks</li>
+<li>plays nicely with any library and web components</li>
+</ul><p>Feel free to use any other project for events handling, templates, animations etc.</p>
 
-<p>DiffRenderer is designed in first place to play nicely with any library and web components.</p>
+<div class="highlight highlight-javascript"><pre>
+<span class="kd">var</span> <span class="nx">DiffRenderer</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'diff-renderer'</span><span class="p">)</span>
 
-<p>DiffRenderer will dramatically simplify your view logic in non-trivial tasks.</p>
+<span class="kd">var</span> <span class="nx">el</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'my-view'</span><span class="p">)</span>
 
-<p>Feel free to use any other project for events handling, templates, animations etc.</p>
+<span class="c1">// Create renderer instance associated with some parent DOM element.</span>
+<span class="kd">var</span> <span class="nx">renderer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DiffRenderer</span><span class="p">(</span><span class="nx">el</span><span class="p">)</span>
+
+<span class="c1">// Put html you want to render.</span>
+<span class="nx">renderer</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span><span class="s1">'&lt;div&gt;My content&lt;/div&gt;'</span><span class="p">)</span>
+
+<span class="c1">// Start rendering loop once.</span>
+<span class="nx">DiffRenderer</span><span class="p">.</span><span class="nx">start</span><span class="p">()</span>
+</pre></div>
 
 <h2>
-<a name="why" class="anchor" href="#why"><span class="octicon octicon-link"></span></a>Why</h2>
+<a name="dom-is-slow" class="anchor" href="#dom-is-slow"><span class="octicon octicon-link"></span></a>DOM is slow.</h2>
 
-<p>DOM is slow. It has always been slow. There is no hope this will change in the near future.</p>
+<p>If your view state has changed, you would normally manually go through changes and apply them to the dom by manipulating dom nodes or overwriting the view completely with .innerHTML.</p>
 
-<p>We want to display the changes of our state or data without thinking about "how to render".
-jQuery has fixed inconsistencies for popular DOM methods and made our live easier for years. In the meantime requirements on web applications grew up. Complex application logic and push notifications led us to the need of bidirectional bindings between UI and data.</p>
-
-<p>Projects like <a href="https://github.com/facebook/react/">react</a> were born.</p>
-
-<p>React is great. It solves lots of our problems, but the price is high. It comes at a price of "no compatibility" to all the things we have build in the last decade.</p>
-
-<h2>
+<ol>
+<li>Manipulating dom nodes in non trivial applications makes you view logic complicated.</li>
+<li>Using .innerHTML causes performance and memory issues.</li>
+</ol><h2>
 <a name="playground" class="anchor" href="#playground"><span class="octicon octicon-link"></span></a>Playground</h2>
 
 <p>Visit <a href="//kof.github.com/diff-renderer/demo/playground.html">playground</a> to see it in action.</p>
@@ -74,7 +83,7 @@ Client sends an object to the server, server validates it, client gets cleaned o
 <li>It accepts a snapshot of your state in html or json format. You can use any template engine or none.</li>
 <li>It calculates the difference to the cached state of the dom.</li>
 <li>Intelligently renders the difference by only modifying/adding/removing nodes it has to.</li>
-<li>It reuses DOM elements.</li>
+<li>It always reuses DOM elements.</li>
 </ol><h2>
 <a name="gotchas" class="anchor" href="#gotchas"><span class="octicon octicon-link"></span></a>Gotchas</h2>
 
